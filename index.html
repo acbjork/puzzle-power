@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,64 +6,126 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Puzzle Power</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 2rem; background-color: #f5f5f5; color: #333; }
-    h1 { text-align: center; font-size: 2rem; }
-    form { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; }
-    label { font-weight: bold; margin-top: 1rem; }
-    textarea { width: 100%; height: 70px; padding: 0.75rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 5px; }
-    button { padding: 0.75rem; font-size: 1.2rem; background-color: #007aff; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    button:hover { background-color: #005bb5; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 2rem;
+    }
+    th, td {
+      padding: 0.5rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background-color: #eee;
+    }
+    textarea {
+      width: 100%;
+      height: 70px;
+      font-size: 1rem;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    textarea.winner {
+      border: 2px solid #2ecc71;
+      background-color: #eaffea;
+    }
+    textarea.tie {
+      border: 2px solid #f39c12;
+      background-color: #fff8e1;
+    }
+    textarea.dnf {
+      border: 2px dashed #aaa;
+      background-color: #f0f0f0;
+    }
+    button {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 1rem;
+      font-size: 1.1rem;
+      background-color: #007aff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #005bb5;
+    }
   </style>
 </head>
 <body>
   <h1>🧠 Puzzle Power 📅</h1>
   <form id="results-form">
-    <label for="adam_connections">NYT Connections – Adam:</label>
-    <textarea id="adam_connections" name="adam_connections"></textarea>
-    <label for="jonathan_connections">NYT Connections – Jonathan:</label>
-    <textarea id="jonathan_connections" name="jonathan_connections"></textarea>
-    <label for="adam_strands">NYT Strands – Adam:</label>
-    <textarea id="adam_strands" name="adam_strands"></textarea>
-    <label for="jonathan_strands">NYT Strands – Jonathan:</label>
-    <textarea id="jonathan_strands" name="jonathan_strands"></textarea>
-    <label for="adam_wapo_newsquiz">WaPo News Quiz – Adam:</label>
-    <textarea id="adam_wapo_newsquiz" name="adam_wapo_newsquiz"></textarea>
-    <label for="jonathan_wapo_newsquiz">WaPo News Quiz – Jonathan:</label>
-    <textarea id="jonathan_wapo_newsquiz" name="jonathan_wapo_newsquiz"></textarea>
-    <label for="adam_wapo_keyword">WaPo Keyword – Adam:</label>
-    <textarea id="adam_wapo_keyword" name="adam_wapo_keyword"></textarea>
-    <label for="jonathan_wapo_keyword">WaPo Keyword – Jonathan:</label>
-    <textarea id="jonathan_wapo_keyword" name="jonathan_wapo_keyword"></textarea>
-    <label for="adam_mini">NYT Mini Crossword – Adam:</label>
-    <textarea id="adam_mini" name="adam_mini"></textarea>
-    <label for="jonathan_mini">NYT Mini Crossword – Jonathan:</label>
-    <textarea id="jonathan_mini" name="jonathan_mini"></textarea>
-    <label for="adam_apple_news">Apple News Crossword – Adam:</label>
-    <textarea id="adam_apple_news" name="adam_apple_news"></textarea>
-    <label for="jonathan_apple_news">Apple News Crossword – Jonathan:</label>
-    <textarea id="jonathan_apple_news" name="jonathan_apple_news"></textarea>
-    <label for="adam_globle">Globle – Adam:</label>
-    <textarea id="adam_globle" name="adam_globle"></textarea>
-    <label for="jonathan_globle">Globle – Jonathan:</label>
-    <textarea id="jonathan_globle" name="jonathan_globle"></textarea>
-    <label for="adam_flagle">Flagle – Adam:</label>
-    <textarea id="adam_flagle" name="adam_flagle"></textarea>
-    <label for="jonathan_flagle">Flagle – Jonathan:</label>
-    <textarea id="jonathan_flagle" name="jonathan_flagle"></textarea>
-    <label for="adam_wordle">Wordle – Adam:</label>
-    <textarea id="adam_wordle" name="adam_wordle"></textarea>
-    <label for="jonathan_wordle">Wordle – Jonathan:</label>
-    <textarea id="jonathan_wordle" name="jonathan_wordle"></textarea>
-    <label for="adam_tightrope">Britannica Tightrope – Adam:</label>
-    <textarea id="adam_tightrope" name="adam_tightrope"></textarea>
-    <label for="jonathan_tightrope">Britannica Tightrope – Jonathan:</label>
-    <textarea id="jonathan_tightrope" name="jonathan_tightrope"></textarea>
+    <table>
+      <thead>
+        <tr>
+          <th>Puzzle</th>
+          <th>Adam</th>
+          <th>Jonathan</th>
+        </tr>
+      </thead>
+      <tbody id="puzzle-rows">
+        <!-- Puzzle rows will be inserted by JavaScript -->
+      </tbody>
+    </table>
     <button type="submit">Submit Day’s Results</button>
   </form>
+
   <script>
-    document.getElementById('results-form').addEventListener('submit', function(event) {
+    const puzzles = [
+      "Connections",
+      "Strands",
+      "News Quiz",
+      "Keyword",
+      "Mini Crossword",
+      "Apple News Crossword",
+      "Globle",
+      "Flagle",
+      "Wordle",
+      "Tightrope"
+    ];
+
+    const puzzleRows = document.getElementById("puzzle-rows");
+
+    puzzles.forEach(puzzle => {
+      const row = document.createElement("tr");
+
+      const nameCell = document.createElement("td");
+      nameCell.textContent = puzzle;
+
+      const adamCell = document.createElement("td");
+      const adamInput = document.createElement("textarea");
+      adamInput.id = `adam-${puzzle}`;
+      adamCell.appendChild(adamInput);
+
+      const jonCell = document.createElement("td");
+      const jonInput = document.createElement("textarea");
+      jonInput.id = `jonathan-${puzzle}`;
+      jonCell.appendChild(jonInput);
+
+      row.appendChild(nameCell);
+      row.appendChild(adamCell);
+      row.appendChild(jonCell);
+
+      puzzleRows.appendChild(row);
+    });
+
+    document.getElementById("results-form").addEventListener("submit", function(event) {
       event.preventDefault();
-      alert("Thanks! In the future, this will track results and declare a winner.");
+      alert("Results submitted! Winner highlighting will be functional in the next version.");
     });
   </script>
 </body>
