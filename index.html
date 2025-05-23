@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Puzzle Power – Dual Column View</title>
+  <title>Puzzle Power – Identity Reset Option</title>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #f7f7f7; }
     h1 { text-align: center; }
@@ -13,6 +13,7 @@
     textarea { width: 100%; height: 60px; }
     button { padding: 0.5rem 1rem; margin-top: 0.5rem; background: #007aff; color: white; border: none; border-radius: 5px; cursor: pointer; }
     #puzzle-table { display: none; }
+    #resetLink { color: #007aff; cursor: pointer; font-size: 0.9em; display: inline-block; margin-left: 10px; }
   </style>
 </head>
 <body>
@@ -70,7 +71,7 @@
 
           const otherCell = document.createElement("td");
           otherCell.id = `other-${puzzle}`;
-          otherCell.textContent = "(awaiting)";
+          otherCell.textContent = `(${otherPlayer}'s result goes here)`;
 
           const submitCell = document.createElement("td");
           const button = document.createElement("button");
@@ -92,17 +93,20 @@
           submitCell.appendChild(button);
           rows.appendChild(row);
         });
+      }
 
-        // simulate filling in other player’s result (placeholder only)
-        puzzles.forEach(puzzle => {
-          document.getElementById(`other-${puzzle}`).textContent = "(Jonathan's result goes here)";
-        });
+      function showIdentity(currentPlayer) {
+        identityPrompt.innerHTML = `You are logged in as ${currentPlayer} <span id="resetLink">(Not you?)</span>`;
+        document.getElementById("resetLink").onclick = () => {
+          localStorage.removeItem(playerKey);
+          location.reload();
+        };
+        playerSelect.style.display = "none";
+        renderPuzzleTable();
       }
 
       if (currentPlayer) {
-        identityPrompt.textContent = `You are logged in as ${currentPlayer}`;
-        playerSelect.style.display = "none";
-        renderPuzzleTable();
+        showIdentity(currentPlayer);
       }
 
       playerSelect.addEventListener("change", () => {
@@ -110,9 +114,7 @@
         if (selected) {
           localStorage.setItem(playerKey, selected);
           currentPlayer = selected;
-          identityPrompt.textContent = `You are logged in as ${currentPlayer}`;
-          playerSelect.style.display = "none";
-          renderPuzzleTable();
+          showIdentity(currentPlayer);
         }
       });
     };
