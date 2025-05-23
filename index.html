@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Puzzle Power – Step 1 (Console Test)</title>
+  <title>Puzzle Power – Dual Column View</title>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #f7f7f7; }
     h1 { text-align: center; }
@@ -16,7 +16,7 @@
   </style>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – Step 1 (Console Test)</h1>
+  <h1>🧠 Puzzle Power – Dual Column View</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select your name</option>
@@ -29,6 +29,7 @@
       <tr>
         <th>Puzzle</th>
         <th>Your Result</th>
+        <th>Other Player’s Result</th>
         <th>Submit</th>
       </tr>
     </thead>
@@ -44,6 +45,7 @@
 
       const playerKey = "puzzle-player";
       let currentPlayer = localStorage.getItem(playerKey) || "";
+      let otherPlayer = "";
 
       const identityPrompt = document.getElementById("identityPrompt");
       const playerSelect = document.getElementById("playerSelect");
@@ -53,6 +55,8 @@
       function renderPuzzleTable() {
         table.style.display = "table";
         rows.innerHTML = "";
+        otherPlayer = currentPlayer === "Adam" ? "Jonathan" : "Adam";
+
         puzzles.forEach(puzzle => {
           const row = document.createElement("tr");
 
@@ -63,6 +67,10 @@
           const textarea = document.createElement("textarea");
           textarea.id = `input-${puzzle}`;
           inputCell.appendChild(textarea);
+
+          const otherCell = document.createElement("td");
+          otherCell.id = `other-${puzzle}`;
+          otherCell.textContent = "(awaiting)";
 
           const submitCell = document.createElement("td");
           const button = document.createElement("button");
@@ -76,12 +84,18 @@
             console.log(`[Submitted] Player: ${currentPlayer}, Puzzle: ${puzzle}, Result: ${result}`);
             alert(`${puzzle} result submitted (console only).`);
           };
-          submitCell.appendChild(button);
 
           row.appendChild(nameCell);
           row.appendChild(inputCell);
+          row.appendChild(otherCell);
           row.appendChild(submitCell);
+          submitCell.appendChild(button);
           rows.appendChild(row);
+        });
+
+        // simulate filling in other player’s result (placeholder only)
+        puzzles.forEach(puzzle => {
+          document.getElementById(`other-${puzzle}`).textContent = "(Jonathan's result goes here)";
         });
       }
 
