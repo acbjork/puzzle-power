@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Puzzle Power – Identity Reset Option</title>
+  <title>Puzzle Power – Supabase Sync</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #f7f7f7; }
     h1 { text-align: center; }
@@ -17,7 +18,7 @@
   </style>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – Dual Column View</h1>
+  <h1>🧠 Puzzle Power – Supabase Sync</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select your name</option>
@@ -38,12 +39,17 @@
   </table>
 
   <script>
-    window.onload = function () {
+    window.onload = async function () {
+      const SUPABASE_URL = "https://iqhgsdpqqshfeiqrkrqw.supabase.co";
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxaGdzZHBxcXNoZmVpcXJrcnF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NjExMDAsImV4cCI6MjA2MzQzNzEwMH0.W3eH88RD9s3pmuVlA-H7VIfVWLq_ymtj22JLd2f9Cec";
+      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
       const puzzles = [
         "Connections", "Strands", "News Quiz", "Keyword", "Mini Crossword",
         "Apple News Crossword", "Globle", "Flagle", "Wordle", "Tightrope"
       ];
 
+      const today = new Date().toISOString().split("T")[0];
       const playerKey = "puzzle-player";
       let currentPlayer = localStorage.getItem(playerKey) || "";
       let otherPlayer = "";
@@ -53,10 +59,26 @@
       const table = document.getElementById("puzzle-table");
       const rows = document.getElementById("puzzle-rows");
 
-      function renderPuzzleTable() {
+      async function fetchOtherPlayerResults() {
+        const { data, error } = await supabase
+          .from("results")
+          .select("puzzle_name, raw_result")
+          .eq("date", today)
+          .eq("player", otherPlayer);
+        if (error) return {};
+        const resultMap = {};
+        data.forEach(entry => {
+          resultMap[entry.puzzle_name] = entry.raw_result;
+        });
+        return resultMap;
+      }
+
+      async function renderPuzzleTable() {
         table.style.display = "table";
         rows.innerHTML = "";
         otherPlayer = currentPlayer === "Adam" ? "Jonathan" : "Adam";
+
+        const otherResults = await fetchOtherPlayerResults();
 
         puzzles.forEach(puzzle => {
           const row = document.createElement("tr");
@@ -71,19 +93,28 @@
 
           const otherCell = document.createElement("td");
           otherCell.id = `other-${puzzle}`;
-          otherCell.textContent = `(${otherPlayer}'s result goes here)`;
+          otherCell.textContent = otherResults[puzzle] || "(no result)";
 
           const submitCell = document.createElement("td");
           const button = document.createElement("button");
           button.textContent = "Submit";
-          button.onclick = () => {
+          button.onclick = async () => {
             const result = textarea.value.trim();
             if (!currentPlayer || !result) {
               alert("Missing identity or result.");
               return;
             }
-            console.log(`[Submitted] Player: ${currentPlayer}, Puzzle: ${puzzle}, Result: ${result}`);
-            alert(`${puzzle} result submitted (console only).`);
+            const { error } = await supabase.from("results").insert([{
+              date: today,
+              puzzle_name: puzzle,
+              player: currentPlayer,
+              raw_result: result
+            }]);
+            if (error) {
+              alert("Error submitting result.");
+            } else {
+              alert(`${puzzle} result submitted!`);
+            }
           };
 
           row.appendChild(nameCell);
@@ -95,8 +126,8 @@
         });
       }
 
-      function showIdentity(currentPlayer) {
-        identityPrompt.innerHTML = `You are logged in as ${currentPlayer} <span id="resetLink">(Not you?)</span>`;
+      function showIdentity(name) {
+        identityPrompt.innerHTML = `You are logged in as ${name} <span id="resetLink">(Not you?)</span>`;
         document.getElementById("resetLink").onclick = () => {
           localStorage.removeItem(playerKey);
           location.reload();
