@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Puzzle Power – Step 1 Fix</title>
+  <title>Puzzle Power – Step 1 (Working)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #f7f7f7; }
@@ -17,7 +17,7 @@
   </style>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – Step 1 (Fixed)</h1>
+  <h1>🧠 Puzzle Power – Step 1 (Working)</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select your name</option>
@@ -37,80 +37,82 @@
   </table>
 
   <script>
-    const SUPABASE_URL = "https://iqhgsdpqqshfeiqrkrqw.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxaGdzZHBxcXNoZmVpcXJrcnF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NjExMDAsImV4cCI6MjA2MzQzNzEwMH0.W3eH88RD9s3pmuVlA-H7VIfVWLq_ymtj22JLd2f9Cec";
+    window.onload = function() {
+      const SUPABASE_URL = "https://iqhgsdpqqshfeiqrkrqw.supabase.co";
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxaGdzZHBxcXNoZmVpcXJrcnF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NjExMDAsImV4cCI6MjA2MzQzNzEwMH0.W3eH88RD9s3pmuVlA-H7VIfVWLq_ymtj22JLd2f9Cec";
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const puzzles = [
-      "Connections", "Strands", "News Quiz", "Keyword", "Mini Crossword",
-      "Apple News Crossword", "Globle", "Flagle", "Wordle", "Tightrope"
-    ];
+      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const puzzles = [
+        "Connections", "Strands", "News Quiz", "Keyword", "Mini Crossword",
+        "Apple News Crossword", "Globle", "Flagle", "Wordle", "Tightrope"
+      ];
 
-    const today = new Date().toISOString().split("T")[0];
-    const playerKey = "puzzle-player";
+      const today = new Date().toISOString().split("T")[0];
+      const playerKey = "puzzle-player";
 
-    let currentPlayer = localStorage.getItem(playerKey) || "";
+      let currentPlayer = localStorage.getItem(playerKey) || "";
 
-    const identityPrompt = document.getElementById("identityPrompt");
-    const playerSelect = document.getElementById("playerSelect");
-    const table = document.getElementById("puzzle-table");
-    const rows = document.getElementById("puzzle-rows");
+      const identityPrompt = document.getElementById("identityPrompt");
+      const playerSelect = document.getElementById("playerSelect");
+      const table = document.getElementById("puzzle-table");
+      const rows = document.getElementById("puzzle-rows");
 
-    function renderPuzzleTable() {
-      table.style.display = "table";
-      rows.innerHTML = "";
-      puzzles.forEach(puzzle => {
-        const row = document.createElement("tr");
-        const nameCell = document.createElement("td");
-        nameCell.textContent = puzzle;
+      function renderPuzzleTable() {
+        table.style.display = "table";
+        rows.innerHTML = "";
+        puzzles.forEach(puzzle => {
+          const row = document.createElement("tr");
+          const nameCell = document.createElement("td");
+          nameCell.textContent = puzzle;
 
-        const inputCell = document.createElement("td");
-        const input = document.createElement("textarea");
-        input.id = `input-${puzzle}`;
-        inputCell.appendChild(input);
+          const inputCell = document.createElement("td");
+          const input = document.createElement("textarea");
+          input.id = `input-${puzzle}`;
+          inputCell.appendChild(input);
 
-        const submitCell = document.createElement("td");
-        const button = document.createElement("button");
-        button.textContent = "Submit";
-        button.onclick = async () => {
-          const value = input.value.trim();
-          if (!currentPlayer || !value) {
-            alert("Missing identity or input.");
-            return;
-          }
-          await supabase.from("results").insert([{
-            date: today,
-            puzzle_name: puzzle,
-            player: currentPlayer,
-            raw_result: value
-          }]);
-          alert(`${puzzle} result submitted.`);
-        };
-        submitCell.appendChild(button);
+          const submitCell = document.createElement("td");
+          const button = document.createElement("button");
+          button.textContent = "Submit";
+          button.onclick = async () => {
+            const value = input.value.trim();
+            if (!currentPlayer || !value) {
+              alert("Missing identity or input.");
+              return;
+            }
+            await supabase.from("results").insert([{
+              date: today,
+              puzzle_name: puzzle,
+              player: currentPlayer,
+              raw_result: value
+            }]);
+            alert(`${puzzle} result submitted.`);
+          };
+          submitCell.appendChild(button);
 
-        row.appendChild(nameCell);
-        row.appendChild(inputCell);
-        row.appendChild(submitCell);
-        rows.appendChild(row);
-      });
-    }
+          row.appendChild(nameCell);
+          row.appendChild(inputCell);
+          row.appendChild(submitCell);
+          rows.appendChild(row);
+        });
+      }
 
-    if (currentPlayer) {
-      identityPrompt.textContent = `You are logged in as ${currentPlayer}`;
-      playerSelect.style.display = "none";
-      renderPuzzleTable();
-    }
-
-    playerSelect.addEventListener("change", () => {
-      const selected = playerSelect.value;
-      if (selected) {
-        localStorage.setItem(playerKey, selected);
-        currentPlayer = selected;
+      if (currentPlayer) {
         identityPrompt.textContent = `You are logged in as ${currentPlayer}`;
         playerSelect.style.display = "none";
         renderPuzzleTable();
       }
-    });
+
+      playerSelect.addEventListener("change", () => {
+        const selected = playerSelect.value;
+        if (selected) {
+          localStorage.setItem(playerKey, selected);
+          currentPlayer = selected;
+          identityPrompt.textContent = `You are logged in as ${currentPlayer}`;
+          playerSelect.style.display = "none";
+          renderPuzzleTable();
+        }
+      });
+    };
   </script>
 </body>
 </html>
