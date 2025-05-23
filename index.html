@@ -4,17 +4,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Puzzle Power – Identity Test</title>
+  <title>Puzzle Power – Step 1 (Supabase Enabled)</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #f7f7f7; }
     h1 { text-align: center; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; vertical-align: top; }
+    textarea { width: 100%; height: 60px; }
+    button { padding: 0.5rem 1rem; margin-top: 0.5rem; background: #007aff; color: white; border: none; border-radius: 5px; cursor: pointer; }
     #puzzle-table { display: none; }
   </style>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – Identity Render Test</h1>
+  <h1>🧠 Puzzle Power – Step 1 (with Supabase)</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select your name</option>
@@ -26,7 +29,8 @@
     <thead>
       <tr>
         <th>Puzzle</th>
-        <th>Status</th>
+        <th>Your Result</th>
+        <th>Submit</th>
       </tr>
     </thead>
     <tbody id="puzzle-rows"></tbody>
@@ -34,11 +38,16 @@
 
   <script>
     window.onload = function() {
+      const SUPABASE_URL = "https://iqhgsdpqqshfeiqrkrqw.supabase.co";
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxaGdzZHBxcXNoZmVpcXJrcnF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NjExMDAsImV4cCI6MjA2MzQzNzEwMH0.W3eH88RD9s3pmuVlA-H7VIfVWLq_ymtj22JLd2f9Cec";
+      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
       const puzzles = [
         "Connections", "Strands", "News Quiz", "Keyword", "Mini Crossword",
         "Apple News Crossword", "Globle", "Flagle", "Wordle", "Tightrope"
       ];
 
+      const today = new Date().toISOString().split("T")[0];
       const playerKey = "puzzle-player";
       let currentPlayer = localStorage.getItem(playerKey) || "";
 
@@ -52,7 +61,41 @@
         rows.innerHTML = "";
         puzzles.forEach(puzzle => {
           const row = document.createElement("tr");
-          row.innerHTML = `<td>${puzzle}</td><td>Ready for input</td>`;
+
+          const nameCell = document.createElement("td");
+          nameCell.textContent = puzzle;
+
+          const inputCell = document.createElement("td");
+          const textarea = document.createElement("textarea");
+          textarea.id = `input-${puzzle}`;
+          inputCell.appendChild(textarea);
+
+          const submitCell = document.createElement("td");
+          const button = document.createElement("button");
+          button.textContent = "Submit";
+          button.onclick = async () => {
+            const result = textarea.value.trim();
+            if (!currentPlayer || !result) {
+              alert("Missing identity or result.");
+              return;
+            }
+            const { error } = await supabase.from("results").insert([{
+              date: today,
+              puzzle_name: puzzle,
+              player: currentPlayer,
+              raw_result: result
+            }]);
+            if (error) {
+              alert("Error saving result.");
+            } else {
+              alert(`${puzzle} result submitted!`);
+            }
+          };
+          submitCell.appendChild(button);
+
+          row.appendChild(nameCell);
+          row.appendChild(inputCell);
+          row.appendChild(submitCell);
           rows.appendChild(row);
         });
       }
