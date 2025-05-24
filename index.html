@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🧠 I’m Puzzled‼️ — C.4.9</title>
+  <title>🧠&nbsp;I’m Puzzled&nbsp;‼️ — C.4.10</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #fff; }
@@ -11,12 +11,13 @@
     th, td { border: 1px solid #ccc; padding: 0.5rem; vertical-align: top; }
     textarea, pre { width: 100%; font-family: inherit; margin: 0; padding: 0.25rem; box-sizing: border-box; }
     pre { line-height: 1.1; padding: 0.25rem 0; white-space: pre-wrap; }
+    .winner { background: #d4edda !important; font-weight: bold; }
+    .tie { background: #fff3cd !important; font-weight: bold; }
     .version { font-size: 0.8rem; color: #888; position: fixed; bottom: 4px; right: 8px; }
-    .icon-img { height: 1em; vertical-align: middle; margin-left: 0.4em; }
   </style>
 </head>
 <body>
-  <h1>🧠 I’m Puzzled‼️ — C.4.9</h1>
+  <h1>🧠&nbsp;I’m Puzzled&nbsp;‼️ — C.4.10</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select</option>
@@ -28,13 +29,13 @@
     <thead>
       <tr>
         <th>Puzzle</th>
-        <th>Adam <img src="ABE897D1-1D0C-4728-8F16-6BE44FDB1BF9.png" class="icon-img" alt="Atom icon"/></th>
+        <th>Adam 🌵</th>
         <th>Jonathan 💩</th>
       </tr>
     </thead>
     <tbody id="puzzleBody"></tbody>
   </table>
-  <div class="version">vC.4.9</div>
+  <div class="version">vC.4.10</div>
 
 <script>
 const supabase = window.supabase.createClient(
@@ -51,19 +52,44 @@ const playerSelect = document.getElementById("playerSelect");
 const puzzleBody = document.getElementById("puzzleBody");
 const resultsTable = document.getElementById("resultsTable");
 
+function parseWordle(text) {
+  const m = text.match(/Wordle\s+(\d+)\s+(\d|X)\/6/i);
+  if (!m) return null;
+  return { puzzle: parseInt(m[1]), guesses: m[2] === "X" ? 7 : parseInt(m[2]) };
+}
+function determineWinner(p, a, j) {
+  if (!a || !j) return { winner: "", warn: false };
+  if (p === "Wordle") {
+    const pa = parseWordle(a), pj = parseWordle(j);
+    const mismatch = pa && pj && pa.puzzle !== pj.puzzle;
+    if (!pa || !pj) return { winner: "", warn: mismatch };
+    if (pa.guesses < pj.guesses) return { winner: "Adam", warn: mismatch };
+    if (pj.guesses < pa.guesses) return { winner: "Jonathan", warn: mismatch };
+    return { winner: "Tie", warn: mismatch };
+  } else if (p === "Connections") {
+    const count = s => (s.match(/[🟨🟩🟦🟪]{4}/g) || []).length;
+    const purpleIndex = s => s.split(/\r?\n/).findIndex(l => l.trim() === "🟪🟪🟪🟪");
+    const ga = count(a), gj = count(j);
+    if (ga < gj) return { winner: "Adam" };
+    if (gj < ga) return { winner: "Jonathan" };
+    const ia = purpleIndex(a), ij = purpleIndex(j);
+    if (ia < ij) return { winner: "Adam" };
+    if (ij < ia) return { winner: "Jonathan" };
+    return { winner: "Tie" };
+  }
+  return { winner: "" };
+}
+
 async function load() {
-  console.log("Load function triggered.");
   status.textContent = "Loading...";
   const result = await supabase.from("results").select("*").eq("date", today);
   const data = result.data;
   const error = result.error;
   if (error || !data) {
-    console.error("Load error:", error);
     status.textContent = "Error loading results: " + (error?.message || "Unknown error");
     return;
   }
   status.textContent = "Loaded!";
-  console.log("Data loaded successfully:", data);
   renderTable(data);
 }
 
@@ -77,8 +103,30 @@ function renderTable(data) {
   puzzleBody.innerHTML = "";
   puzzles.forEach(p => {
     const a = map[p]?.Adam || "", j = map[p]?.Jonathan || "";
+    const { winner } = determineWinner(p, a, j);
     const row = document.createElement("tr");
-    row.innerHTML = `<td>${p}</td><td><pre>${a}</pre></td><td><pre>${j}</pre></td>`;
+    const td0 = document.createElement("td");
+    td0.textContent = p;
+    const td1 = document.createElement("td");
+    const td2 = document.createElement("td");
+
+    const pre1 = document.createElement("pre");
+    pre1.textContent = a;
+    const pre2 = document.createElement("pre");
+    pre2.textContent = j;
+    td1.appendChild(pre1);
+    td2.appendChild(pre2);
+
+    if (winner === "Adam") td1.classList.add("winner");
+    if (winner === "Jonathan") td2.classList.add("winner");
+    if (winner === "Tie") {
+      td1.classList.add("tie");
+      td2.classList.add("tie");
+    }
+
+    row.appendChild(td0);
+    row.appendChild(td1);
+    row.appendChild(td2);
     puzzleBody.appendChild(row);
   });
 
