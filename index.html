@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🧠&nbsp;I’m Puzzled&nbsp;‼️ — C.4.10</title>
+  <title>🧠&nbsp;I’m Puzzled&nbsp;‼️ — C.4.11</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #fff; }
@@ -13,11 +13,12 @@
     pre { line-height: 1.1; padding: 0.25rem 0; white-space: pre-wrap; }
     .winner { background: #d4edda !important; font-weight: bold; }
     .tie { background: #fff3cd !important; font-weight: bold; }
+    .warning { color: #856404; font-weight: bold; margin-bottom: 0.25rem; font-size: 0.85rem; }
     .version { font-size: 0.8rem; color: #888; position: fixed; bottom: 4px; right: 8px; }
   </style>
 </head>
 <body>
-  <h1>🧠&nbsp;I’m Puzzled&nbsp;‼️ — C.4.10</h1>
+  <h1>🧠&nbsp;I’m Puzzled&nbsp;‼️ — C.4.11</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select</option>
@@ -35,7 +36,7 @@
     </thead>
     <tbody id="puzzleBody"></tbody>
   </table>
-  <div class="version">vC.4.10</div>
+  <div class="version">vC.4.11</div>
 
 <script>
 const supabase = window.supabase.createClient(
@@ -57,15 +58,17 @@ function parseWordle(text) {
   if (!m) return null;
   return { puzzle: parseInt(m[1]), guesses: m[2] === "X" ? 7 : parseInt(m[2]) };
 }
+
 function determineWinner(p, a, j) {
-  if (!a || !j) return { winner: "", warn: false };
+  if (!a || !j) return { winner: "", warn: false, debug: {} };
   if (p === "Wordle") {
     const pa = parseWordle(a), pj = parseWordle(j);
     const mismatch = pa && pj && pa.puzzle !== pj.puzzle;
-    if (!pa || !pj) return { winner: "", warn: mismatch };
-    if (pa.guesses < pj.guesses) return { winner: "Adam", warn: mismatch };
-    if (pj.guesses < pa.guesses) return { winner: "Jonathan", warn: mismatch };
-    return { winner: "Tie", warn: mismatch };
+    console.log("Wordle parsed - Adam:", pa, "Jonathan:", pj);
+    if (!pa || !pj) return { winner: "", warn: true, debug: { pa, pj } };
+    if (pa.guesses < pj.guesses) return { winner: "Adam", warn: mismatch, debug: { pa, pj } };
+    if (pj.guesses < pa.guesses) return { winner: "Jonathan", warn: mismatch, debug: { pa, pj } };
+    return { winner: "Tie", warn: mismatch, debug: { pa, pj } };
   } else if (p === "Connections") {
     const count = s => (s.match(/[🟨🟩🟦🟪]{4}/g) || []).length;
     const purpleIndex = s => s.split(/\r?\n/).findIndex(l => l.trim() === "🟪🟪🟪🟪");
@@ -103,7 +106,7 @@ function renderTable(data) {
   puzzleBody.innerHTML = "";
   puzzles.forEach(p => {
     const a = map[p]?.Adam || "", j = map[p]?.Jonathan || "";
-    const { winner } = determineWinner(p, a, j);
+    const { winner, warn, debug } = determineWinner(p, a, j);
     const row = document.createElement("tr");
     const td0 = document.createElement("td");
     td0.textContent = p;
@@ -111,9 +114,18 @@ function renderTable(data) {
     const td2 = document.createElement("td");
 
     const pre1 = document.createElement("pre");
-    pre1.textContent = a;
     const pre2 = document.createElement("pre");
+    pre1.textContent = a;
     pre2.textContent = j;
+
+    if (warn && p === "Wordle") {
+      const warnDiv = document.createElement("div");
+      warnDiv.className = "warning";
+      warnDiv.textContent = "Discordant puzzle versions";
+      td1.appendChild(warnDiv.cloneNode(true));
+      td2.appendChild(warnDiv);
+    }
+
     td1.appendChild(pre1);
     td2.appendChild(pre2);
 
