@@ -3,25 +3,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Puzzle Power – DNF Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Puzzle Power – Lock + DNF Demo</title>
   <style>
-    body { font-family: sans-serif; padding: 1rem; background: #f7f7f7; }
+    body { font-family: sans-serif; padding: 1rem; background: #f4f4f4; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { border: 1px solid #ccc; padding: 0.5rem; vertical-align: top; }
     .winner { background: #d4edda; font-weight: bold; }
     .dnf { color: red; font-style: italic; }
+    input { width: 100%; padding: 0.25rem; }
+    .readonly { background: #eee; color: #666; }
   </style>
 </head>
 <body>
-  <h1>🧩 Puzzle Power – Winner + DNF Demo</h1>
+  <h1>🧩 Puzzle Power – Locking & DNF Demo</h1>
+  <p>Time simulated as <strong>12:31 AM</strong> to demo lock & DNF logic</p>
   <table>
     <thead>
       <tr>
         <th>Puzzle</th>
         <th>Adam</th>
         <th>Jonathan</th>
-        <th>Winner</th>
       </tr>
     </thead>
     <tbody id="puzzle-rows"></tbody>
@@ -29,102 +31,64 @@
 
   <script>
     const puzzles = ["Connections", "Strands", "Wordle", "Mini Crossword"];
-
-    // Simulated current time: 12:45am (past 30-minute DNF window)
-    const demoCurrentHour = 0;
-    const demoCurrentMin = 45;
+    const nowHour = 0;
+    const nowMinute = 31;
 
     const dummyResults = {
       Adam: {
-        "Connections": null, // Adam forgot
-        "Strands": "9 guesses, 1 hint",
+        "Connections": "4 guesses",
+        "Strands": "",
         "Wordle": "5/6",
         "Mini Crossword": "1:12"
       },
       Jonathan: {
         "Connections": "5 guesses",
-        "Strands": null, // Jonathan forgot
+        "Strands": "9 guesses, 2 hints",
         "Wordle": "4/6",
-        "Mini Crossword": "1:18"
+        "Mini Crossword": ""
       }
     };
 
-    function isAfterDNFTime() {
-      return demoCurrentHour > 0 || demoCurrentMin >= 30;
-    }
-
-    function labelResult(result) {
-      return result ? result : (isAfterDNFTime() ? "DNF" : "");
-    }
-
-    function determineWinner(puzzle, aResult, jResult) {
-      const parseTime = s => {
-        const parts = s.split(":");
-        return parts.length === 2 ? (parseInt(parts[0]) * 60 + parseInt(parts[1])) : Infinity;
-      };
-
-      const adamForfeit = !aResult && isAfterDNFTime();
-      const jonForfeit = !jResult && isAfterDNFTime();
-
-      if (adamForfeit && !jonForfeit) return "Jonathan";
-      if (jonForfeit && !adamForfeit) return "Adam";
-      if (adamForfeit && jonForfeit) return "None";
-
-      if (!aResult || !jResult) return "";
-
-      if (puzzle === "Mini Crossword") {
-        const a = parseTime(aResult);
-        const j = parseTime(jResult);
-        if (a < j) return "Adam";
-        if (j < a) return "Jonathan";
-        return "Tie";
-      }
-      if (puzzle === "Wordle") {
-        const a = parseInt(aResult?.[0]);
-        const j = parseInt(jResult?.[0]);
-        if (a < j) return "Adam";
-        if (j < a) return "Jonathan";
-        return "Tie";
-      }
-      if (puzzle === "Connections" || puzzle === "Strands") {
-        const a = parseInt(aResult);
-        const j = parseInt(jResult);
-        if (a < j) return "Adam";
-        if (j < a) return "Jonathan";
-        return "Tie";
-      }
-      return "";
-    }
+    const isAfterMidnight = nowHour >= 0;
+    const isAfter1230am = nowHour > 0 || nowMinute >= 30;
 
     const tbody = document.getElementById("puzzle-rows");
+
     puzzles.forEach(puzzle => {
       const row = document.createElement("tr");
-      const aRaw = dummyResults.Adam[puzzle];
-      const jRaw = dummyResults.Jonathan[puzzle];
-      const aDisplay = labelResult(aRaw);
-      const jDisplay = labelResult(jRaw);
-      const winner = determineWinner(puzzle, aRaw, jRaw);
 
-      const td1 = document.createElement("td");
-      td1.textContent = puzzle;
+      const tdPuzzle = document.createElement("td");
+      tdPuzzle.textContent = puzzle;
 
-      const td2 = document.createElement("td");
-      td2.textContent = aDisplay;
-      if (aDisplay === "DNF") td2.classList.add("dnf");
-      else if (winner === "Adam") td2.classList.add("winner");
+      const tdAdam = document.createElement("td");
+      const aVal = dummyResults.Adam[puzzle];
+      const aInput = document.createElement("input");
+      if (aVal || isAfterMidnight) {
+        aInput.value = aVal || (isAfter1230am ? "DNF" : "");
+        aInput.readOnly = !!aVal || isAfterMidnight;
+        if (aInput.readOnly) aInput.classList.add("readonly");
+        if (!aVal && isAfter1230am) aInput.classList.add("dnf");
+      } else {
+        aInput.placeholder = "Enter result";
+      }
+      tdAdam.appendChild(aInput);
 
-      const td3 = document.createElement("td");
-      td3.textContent = jDisplay;
-      if (jDisplay === "DNF") td3.classList.add("dnf");
-      else if (winner === "Jonathan") td3.classList.add("winner");
+      const tdJon = document.createElement("td");
+      const jVal = dummyResults.Jonathan[puzzle];
+      const jInput = document.createElement("input");
+      if (jVal || isAfterMidnight) {
+        jInput.value = jVal || (isAfter1230am ? "DNF" : "");
+        jInput.readOnly = !!jVal || isAfterMidnight;
+        if (jInput.readOnly) jInput.classList.add("readonly");
+        if (!jVal && isAfter1230am) jInput.classList.add("dnf");
+      } else {
+        jInput.placeholder = "Enter result";
+      }
+      tdJon.appendChild(jInput);
 
-      const td4 = document.createElement("td");
-      td4.textContent = winner || "";
-
-      row.appendChild(td1);
-      row.appendChild(td2);
-      row.appendChild(td3);
-      row.appendChild(td4);
+      row.appendChild(tdPuzzle);
+      row.appendChild(tdAdam);
+      row.appendChild(tdJon);
       tbody.appendChild(row);
     });
   </script>
