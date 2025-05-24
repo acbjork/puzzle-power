@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Puzzle Power – Increment C.1</title>
+  <title>Puzzle Power – Increment C.2</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; background: #f7f7f7; padding: 1rem; }
@@ -42,7 +42,7 @@
   </style>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – Increment C.1 (Connections + Wordle)</h1>
+  <h1>🧠 Puzzle Power – Increment C.2</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select your name</option>
@@ -65,7 +65,6 @@
     const playerKey = "puzzle-player";
     const today = new Date().toISOString().split("T")[0];
     let currentPlayer = localStorage.getItem(playerKey) || "";
-    let otherPlayer = "";
 
     const identityPrompt = document.getElementById("identityPrompt");
     const playerSelect = document.getElementById("playerSelect");
@@ -81,6 +80,11 @@
       return (text.match(/[🟨🟩🟦🟪]{4}/g) || []).length;
     }
 
+    function findFirstPurpleRowIndex(text) {
+      const lines = text.split(/\r?\n/);
+      return lines.findIndex(line => line.trim() === "🟪🟪🟪🟪");
+    }
+
     function parseWordleGuesses(text) {
       const match = text.match(/Wordle \d+ (\d|X)\/6/);
       return match ? (match[1] === "X" ? 7 : parseInt(match[1])) : NaN;
@@ -88,43 +92,45 @@
 
     function determineWinner(puzzle, aResult, jResult) {
       if (!aResult || !jResult) return "";
-      let a, j;
+      let aScore, jScore;
       if (puzzle === "Connections") {
-        a = parseConnectionsGuesses(aResult);
-        j = parseConnectionsGuesses(jResult);
+        aScore = parseConnectionsGuesses(aResult);
+        jScore = parseConnectionsGuesses(jResult);
+        if (aScore < jScore) return "Adam";
+        if (jScore < aScore) return "Jonathan";
+        const aPurpleIndex = findFirstPurpleRowIndex(aResult);
+        const jPurpleIndex = findFirstPurpleRowIndex(jResult);
+        if (aPurpleIndex < jPurpleIndex) return "Adam";
+        if (jPurpleIndex < aPurpleIndex) return "Jonathan";
+        return "Tie";
       } else if (puzzle === "Wordle") {
-        a = parseWordleGuesses(aResult);
-        j = parseWordleGuesses(jResult);
+        aScore = parseWordleGuesses(aResult);
+        jScore = parseWordleGuesses(jResult);
+        if (isNaN(aScore) || isNaN(jScore)) return "";
+        if (aScore < jScore) return "Adam";
+        if (jScore < aScore) return "Jonathan";
+        return "Tie";
       }
-      if (isNaN(a) || isNaN(j)) return "";
-      if (a < j) return "Adam";
-      if (j < a) return "Jonathan";
-      return "Tie";
+      return "";
     }
 
     async function loadData() {
-      otherPlayer = currentPlayer === "Adam" ? "Jonathan" : "Adam";
-      document.getElementById("col1").textContent = "Adam";
-      document.getElementById("col2").textContent = "Jonathan";
+      const { data: allData } = await client.from("results")
+        .select("puzzle_name, raw_result, player")
+        .eq("date", today);
 
-      const { data: otherData } = await client.from("results")
-        .select("puzzle_name, raw_result")
-        .eq("date", today).eq("player", otherPlayer);
-
-      const { data: myData } = await client.from("results")
-        .select("puzzle_name, raw_result")
-        .eq("date", today).eq("player", currentPlayer);
-
-      const myMap = {}, theirMap = {};
-      myData.forEach(row => myMap[row.puzzle_name] = row.raw_result);
-      otherData.forEach(row => theirMap[row.puzzle_name] = row.raw_result);
+      const results = {};
+      allData.forEach(row => {
+        if (!results[row.puzzle_name]) results[row.puzzle_name] = {};
+        results[row.puzzle_name][row.player] = row.raw_result;
+      });
 
       body.innerHTML = "";
       puzzles.forEach(puzzle => {
         const row = document.createElement("tr");
-        const aResult = myMap[puzzle] || "";
-        const jResult = theirMap[puzzle] || "";
-        const winner = determineWinner(puzzle, myMap[puzzle], theirMap[puzzle]);
+        const aResult = results[puzzle]?.["Adam"] || "";
+        const jResult = results[puzzle]?.["Jonathan"] || "";
+        const winner = determineWinner(puzzle, aResult, jResult);
 
         const tdName = document.createElement("td");
         tdName.textContent = puzzle;
@@ -132,7 +138,8 @@
         const tdAdam = document.createElement("td");
         const tdJon = document.createElement("td");
 
-        const makeCell = (isSelf, result, player, isWinner, isTie) => {
+        const makeCell = (player, result, isWinner, isTie) => {
+          const isSelf = currentPlayer === player;
           const container = document.createElement("div");
           if (isSelf) {
             const saved = result !== "";
@@ -191,8 +198,8 @@
         const isJonWinner = winner === "Jonathan";
         const isTie = winner === "Tie";
 
-        tdAdam.appendChild(makeCell(currentPlayer === "Adam", aResult, "Adam", isAdamWinner, isTie));
-        tdJon.appendChild(makeCell(currentPlayer === "Jonathan", jResult, "Jonathan", isJonWinner, isTie));
+        tdAdam.appendChild(makeCell("Adam", aResult, isAdamWinner, isTie));
+        tdJon.appendChild(makeCell("Jonathan", jResult, isJonWinner, isTie));
 
         if (isAdamWinner) tdAdam.classList.add("winner");
         if (isJonWinner) tdJon.classList.add("winner");
