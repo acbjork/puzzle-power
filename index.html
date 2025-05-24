@@ -9,12 +9,16 @@
     h1 { text-align: center; font-size: 2em; margin-bottom: 0.2em; }
     .subtitle { text-align: center; font-size: 0.95em; margin-top: -10px; margin-bottom: 1.5em; color: #555; }
     .version { position: fixed; bottom: 0.5em; right: 1em; font-size: 0.85em; color: #aaa; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1em; }
-    th, td { border: 1px solid #ccc; padding: 0.6em; text-align: center; }
-    th.puzzle, td.puzzle { text-align: left; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1em; table-layout: fixed; }
+    th, td { border: 1px solid #ccc; padding: 0.6em; text-align: center; vertical-align: top; word-wrap: break-word; }
+    th.puzzle, td.puzzle { text-align: left; width: 33%; }
+    td.player-Adam, td.player-Jonathan { width: 33%; }
     textarea { width: 95%; height: 4em; }
     button { margin-top: 0.5em; }
-    .submitted { background-color: #f4f4f4; }
+    .submitted { background-color: #f4f4f4; white-space: pre-wrap; }
+    .winner { background-color: #d4f4d7; }
+    .tie { background-color: #fff8c6; }
+    .note { font-size: 0.85em; color: #555; margin-top: 0.25em; display: block; }
   </style>
 </head>
 <body>
@@ -40,7 +44,7 @@
     </table>
   </div>
 
-  <div class="version">vE.1.1</div>
+  <div class="version">vE.1.2</div>
 
   <script>
     const puzzles = [
@@ -64,30 +68,53 @@
         label.className = "puzzle";
         row.appendChild(label);
 
+        const adamResult = results["Adam"][puzzle];
+        const jonResult = results["Jonathan"][puzzle];
+        let winner = null;
+        let isTie = false;
+
+        if (adamResult && jonResult) {
+          if (adamResult === jonResult) {
+            isTie = true;
+          } else {
+            winner = adamResult.length < jonResult.length ? "Adam" : "Jonathan";
+          }
+        }
+
         ["Adam", "Jonathan"].forEach(name => {
           const cell = document.createElement("td");
-          cell.classList.add("player-" + name.toLowerCase());
+          cell.classList.add("player-" + name);
+          const entry = results[name][puzzle];
 
-          if (results[name][puzzle]) {
+          if (entry) {
             const resultDiv = document.createElement("div");
-            resultDiv.textContent = results[name][puzzle];
+            resultDiv.textContent = entry;
             resultDiv.className = "submitted";
+            resultDiv.style.whiteSpace = "pre-wrap";
+
+            if (winner === name) {
+              resultDiv.classList.add("winner");
+            } else if (isTie) {
+              resultDiv.classList.add("tie");
+            }
+
             cell.appendChild(resultDiv);
 
             if (name === currentPlayer) {
               const editBtn = document.createElement("button");
               editBtn.textContent = "Edit";
-              editBtn.onclick = () => editResult(puzzle, name);
+              editBtn.onclick = () => editResult(puzzle, name, entry);
               cell.appendChild(document.createElement("br"));
               cell.appendChild(editBtn);
             }
           } else if (name === currentPlayer) {
             const textarea = document.createElement("textarea");
             textarea.placeholder = "Paste result here";
+            textarea.value = "";
             textarea.id = `input-${puzzle}`;
             const submitBtn = document.createElement("button");
             submitBtn.textContent = "Submit";
-            submitBtn.onclick = () => submitResult(puzzle, name, textarea.value, cell);
+            submitBtn.onclick = () => submitResult(puzzle, name, textarea.value);
             cell.appendChild(textarea);
             cell.appendChild(document.createElement("br"));
             cell.appendChild(submitBtn);
@@ -102,15 +129,18 @@
       });
     }
 
-    function submitResult(puzzle, name, value, cell) {
+    function submitResult(puzzle, name, value) {
       if (!value.trim()) return;
       results[name][puzzle] = value.trim();
       updatePuzzleTable();
     }
 
-    function editResult(puzzle, name) {
-      delete results[name][puzzle];
-      updatePuzzleTable();
+    function editResult(puzzle, name, original) {
+      const newInput = prompt("Edit your result:", original);
+      if (newInput !== null) {
+        results[name][puzzle] = newInput;
+        updatePuzzleTable();
+      }
     }
 
     document.getElementById("playerPicker").addEventListener("change", function() {
