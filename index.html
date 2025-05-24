@@ -1,1 +1,172 @@
-COMPLETE VERSION: Final C.4.1 app with full Wordle winner logic and real functionality
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Puzzle Power – C.4.1</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; background: #f9f9f9; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; vertical-align: top; }
+    textarea, pre { width: 100%; font-family: inherit; margin: 0; padding: 0.25rem; box-sizing: border-box; }
+    textarea { min-height: 60px; resize: none; }
+    .winner { background: #d4edda !important; font-weight: bold; }
+    .tie { background: #fff3cd !important; font-weight: bold; }
+    .warning { background: #fff3cd; padding: 0.25rem; color: #856404; font-weight: bold; margin-bottom: 0.25rem; }
+    .submit-btn, .edit-btn { margin-top: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.9rem; }
+    .submit-btn { background: #007aff; color: white; border: none; }
+    .edit-btn { background: #ccc; border: none; }
+  </style>
+</head>
+<body>
+  <h1>Puzzle Power – C.4.1</h1>
+  <p id="identityPrompt">Who are you?</p>
+  <select id="playerSelect">
+    <option value="">Select</option>
+    <option value="Adam">Adam</option>
+    <option value="Jonathan">Jonathan</option>
+  </select>
+
+  <table id="resultsTable" style="display:none;">
+    <thead><tr><th>Puzzle</th><th id="c1">Adam</th><th id="c2">Jonathan</th></tr></thead>
+    <tbody id="puzzleBody"></tbody>
+  </table>
+
+<script>
+const supabase = supabase.createClient(
+  "https://iqhgsdpqqshfeiqrkrqw.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+);
+const puzzles = ["Connections", "Wordle"];
+const playerKey = "puzzle-player";
+const today = new Date().toISOString().split("T")[0];
+let currentPlayer = localStorage.getItem(playerKey) || "";
+
+function parseWordleScore(text) {
+  const m = text.match(/Wordle\s+(\d+)\s+(\d|X)\/6/i);
+  if (!m) return { puzzle: null, score: null };
+  return { puzzle: parseInt(m[1]), score: m[2] === "X" ? 7 : parseInt(m[2]) };
+}
+
+function determineWinner(puzzle, aResult, jResult) {
+  let aScore = null, jScore = null, mismatch = false;
+  if (puzzle === "Wordle") {
+    const a = parseWordleScore(aResult || "");
+    const j = parseWordleScore(jResult || "");
+    aScore = a.score;
+    jScore = j.score;
+    mismatch = a.puzzle !== null && j.puzzle !== null && a.puzzle !== j.puzzle;
+  }
+  if (aScore === null || jScore === null) return { winner: "", mismatch };
+  if (aScore < jScore) return { winner: "Adam", mismatch };
+  if (jScore < aScore) return { winner: "Jonathan", mismatch };
+  return { winner: "Tie", mismatch };
+}
+
+async function load() {
+  const { data } = await supabase.from("results")
+    .select("puzzle_name, raw_result, player").eq("date", today);
+  const map = {};
+  data.forEach(r => {
+    if (!map[r.puzzle_name]) map[r.puzzle_name] = {};
+    map[r.puzzle_name][r.player] = r.raw_result;
+  });
+
+  const b = document.getElementById("puzzleBody");
+  b.innerHTML = "";
+  puzzles.forEach(pz => {
+    const aResult = map[pz]?.Adam || "";
+    const jResult = map[pz]?.Jonathan || "";
+    const { winner, mismatch } = determineWinner(pz, aResult, jResult);
+
+    const row = document.createElement("tr");
+    row.innerHTML = `<td>${pz}</td><td></td><td></td>`;
+
+    ["Adam", "Jonathan"].forEach((p, i) => {
+      const cell = row.children[i + 1];
+      const isCurrent = p === currentPlayer;
+      const val = p === "Adam" ? aResult : jResult;
+
+      if (winner === p) cell.classList.add("winner");
+      else if (winner === "Tie") cell.classList.add("tie");
+
+      const div = document.createElement("div");
+
+      if (mismatch) {
+        const warn = document.createElement("div");
+        warn.className = "warning";
+        warn.textContent = "Discordant puzzle versions";
+        div.appendChild(warn);
+      }
+
+      const pre = document.createElement("pre");
+      const ta = document.createElement("textarea");
+      const sb = document.createElement("button");
+      const eb = document.createElement("button");
+
+      if (isCurrent) {
+        ta.value = val;
+        ta.style.display = val ? "none" : "block";
+        pre.textContent = val;
+        pre.style.display = val ? "block" : "none";
+
+        sb.textContent = "Submit";
+        sb.className = "submit-btn";
+        sb.style.display = val ? "none" : "inline-block";
+        sb.onclick = async () => {
+          await supabase.from("results").upsert([{
+            date: today, puzzle_name: pz, player: p, raw_result: ta.value.trim()
+          }]);
+          load();
+        };
+
+        eb.textContent = "Edit";
+        eb.className = "edit-btn";
+        eb.style.display = val ? "inline-block" : "none";
+        eb.onclick = () => {
+          ta.style.display = "block";
+          pre.style.display = "none";
+          sb.style.display = "inline-block";
+          eb.style.display = "none";
+        };
+
+        div.appendChild(pre);
+        div.appendChild(ta);
+        div.appendChild(sb);
+        div.appendChild(eb);
+      } else {
+        pre.textContent = val;
+        div.appendChild(pre);
+      }
+
+      cell.appendChild(div);
+    });
+
+    b.appendChild(row);
+  });
+
+  document.getElementById("resultsTable").style.display = "table";
+}
+
+function showPlayer(name) {
+  localStorage.setItem(playerKey, name);
+  document.getElementById("identityPrompt").innerHTML =
+    `You are logged in as ${name}. <a href="#" onclick="resetPlayer()">Not you?</a>`;
+  document.getElementById("playerSelect").style.display = "none";
+  currentPlayer = name;
+  load();
+}
+
+function resetPlayer() {
+  localStorage.removeItem(playerKey);
+  location.reload();
+}
+
+if (currentPlayer) showPlayer(currentPlayer);
+document.getElementById("playerSelect").onchange = e => {
+  if (e.target.value) showPlayer(e.target.value);
+};
+</script>
+</body>
+</html>
