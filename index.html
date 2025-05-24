@@ -3,81 +3,116 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🧠 Puzzle Power – C.4.2</title>
+  <title>🧠 Puzzle Power – C.4.3</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – C.4.2</h1>
+  <h1>🧠 Puzzle Power – C.4.3</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select</option>
     <option value="Adam">Adam</option>
     <option value="Jonathan">Jonathan</option>
   </select>
+  <div id="status"></div>
   <table id="resultsTable" style="display:none;">
     <thead><tr><th>Puzzle</th><th>Adam</th><th>Jonathan</th></tr></thead>
     <tbody id="puzzleBody"></tbody>
   </table>
-
 <script>
 const supabase = supabase.createClient(
   "https://iqhgsdpqqshfeiqrkrqw.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxaGdzZHBxcXNoZmVpcXJrcnF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NjExMDAsImV4cCI6MjA2MzQzNzEwMH0.W3eH88RD9s3pmuVlA-H7VIfVWLq_ymtj22JLd2f9Cec"
 );
-
 const today = new Date().toISOString().split("T")[0];
 const playerKey = "puzzle-player";
 let currentPlayer = localStorage.getItem(playerKey) || "";
 
-const puzzleList = ["Connections", "Wordle"];
-const prompt = document.getElementById("identityPrompt");
-const select = document.getElementById("playerSelect");
-const table = document.getElementById("resultsTable");
-const body = document.getElementById("puzzleBody");
+const puzzles = ["Connections", "Wordle"];
+const identityPrompt = document.getElementById("identityPrompt");
+const playerSelect = document.getElementById("playerSelect");
+const resultsTable = document.getElementById("resultsTable");
+const puzzleBody = document.getElementById("puzzleBody");
+const status = document.getElementById("status");
 
-async function loadData() {
-  const { data } = await supabase.from("results")
-    .select("puzzle_name, raw_result, player").eq("date", today);
+function parseWordle(text) {
+  const m = text.match(/Wordle\s+(\d+)\s+(\d|X)\/6/i);
+  return m ? { puzzle: parseInt(m[1]), guesses: m[2] === "X" ? 7 : parseInt(m[2]) } : null;
+}
+function parseConnections(text) {
+  return (text.match(/[🟨🟩🟦🟪]{4}/g) || []).length;
+}
+function firstPurpleIndex(text) {
+  const lines = text.split(/\r?\n/);
+  return lines.findIndex(l => l.trim() === "🟪🟪🟪🟪");
+}
+function determineWinner(p, a, j) {
+  if (!a || !j) return { winner: "", warn: false };
+  if (p === "Wordle") {
+    const pa = parseWordle(a), pj = parseWordle(j);
+    const mismatch = pa && pj && pa.puzzle !== pj.puzzle;
+    if (!pa || !pj) return { winner: "", warn: mismatch };
+    if (pa.guesses < pj.guesses) return { winner: "Adam", warn: mismatch };
+    if (pj.guesses < pa.guesses) return { winner: "Jonathan", warn: mismatch };
+    return { winner: "Tie", warn: mismatch };
+  } else if (p === "Connections") {
+    const ga = parseConnections(a), gj = parseConnections(j);
+    if (ga < gj) return { winner: "Adam" };
+    if (gj < ga) return { winner: "Jonathan" };
+    const ia = firstPurpleIndex(a), ij = firstPurpleIndex(j);
+    if (ia < ij) return { winner: "Adam" };
+    if (ij < ia) return { winner: "Jonathan" };
+    return { winner: "Tie" };
+  }
+  return { winner: "" };
+}
+async function load() {
+  const { data, error } = await supabase.from("results").select("*").eq("date", today);
+  if (error) {
+    status.textContent = "Error loading results.";
+    return;
+  }
   const map = {};
   data.forEach(r => {
     if (!map[r.puzzle_name]) map[r.puzzle_name] = {};
     map[r.puzzle_name][r.player] = r.raw_result;
   });
-
-  body.innerHTML = "";
-  puzzleList.forEach(puzzle => {
-    const a = map[puzzle]?.Adam || "";
-    const j = map[puzzle]?.Jonathan || "";
+  puzzleBody.innerHTML = "";
+  puzzles.forEach(p => {
+    const a = map[p]?.Adam || "", j = map[p]?.Jonathan || "";
+    const { winner, warn } = determineWinner(p, a, j);
     const row = document.createElement("tr");
-    row.innerHTML = `<td>${puzzle}</td><td></td><td></td>`;
+    const td0 = document.createElement("td"); td0.textContent = p;
+    const td1 = document.createElement("td");
+    const td2 = document.createElement("td");
 
-    ["Adam", "Jonathan"].forEach((player, i) => {
-      const cell = row.children[i + 1];
-      const val = player === "Adam" ? a : j;
+    function makeCell(name, val, isWinner) {
       const div = document.createElement("div");
-
-      const pre = document.createElement("pre");
-      pre.textContent = val;
-
-      if (player === currentPlayer) {
+      if (warn && p === "Wordle") {
+        const w = document.createElement("div");
+        w.className = "warning";
+        w.textContent = "Discordant puzzle versions";
+        div.appendChild(w);
+      }
+      if (name === currentPlayer) {
         const ta = document.createElement("textarea");
         ta.value = val;
         ta.style.display = val ? "none" : "block";
+        const pre = document.createElement("pre");
+        pre.textContent = val;
         pre.style.display = val ? "block" : "none";
-
         const sb = document.createElement("button");
         sb.textContent = "Submit";
         sb.className = "submit-btn";
         sb.style.display = val ? "none" : "inline-block";
         sb.onclick = async () => {
-          const value = ta.value.trim();
-          if (!value) return;
+          const result = ta.value.trim();
+          if (!result) return;
           await supabase.from("results").upsert([{
-            date: today, puzzle_name: puzzle, player, raw_result: value
+            date: today, puzzle_name: p, player: name, raw_result: result
           }]);
-          loadData();
+          load();
         };
-
         const eb = document.createElement("button");
         eb.textContent = "Edit";
         eb.className = "edit-btn";
@@ -88,44 +123,50 @@ async function loadData() {
           sb.style.display = "inline-block";
           eb.style.display = "none";
         };
-
         div.appendChild(pre);
         div.appendChild(ta);
         div.appendChild(sb);
         div.appendChild(eb);
       } else {
+        const pre = document.createElement("pre");
+        pre.textContent = val;
         div.appendChild(pre);
       }
+      if (isWinner) div.classList.add("winner");
+      return div;
+    }
 
-      cell.appendChild(div);
-    });
+    const aWins = winner === "Adam", jWins = winner === "Jonathan", tie = winner === "Tie";
+    td1.appendChild(makeCell("Adam", a, aWins));
+    td2.appendChild(makeCell("Jonathan", j, jWins));
+    if (tie) {
+      td1.classList.add("tie");
+      td2.classList.add("tie");
+    } else {
+      if (aWins) td1.classList.add("winner");
+      if (jWins) td2.classList.add("winner");
+    }
 
-    body.appendChild(row);
+    row.appendChild(td0); row.appendChild(td1); row.appendChild(td2);
+    puzzleBody.appendChild(row);
   });
-
-  table.style.display = "table";
+  resultsTable.style.display = "table";
 }
-
-function showIdentity(name) {
+function setPlayer(name) {
   currentPlayer = name;
   localStorage.setItem(playerKey, name);
-  prompt.innerHTML = `You are logged in as ${name}. <span style="color:#007aff;cursor:pointer;" onclick="resetIdentity()">Not you?</span>`;
-  select.style.display = "none";
-  loadData();
+  identityPrompt.innerHTML = `You are logged in as ${name}. <span onclick="resetPlayer()" style="color:#007aff;cursor:pointer;">Not you?</span>`;
+  playerSelect.style.display = "none";
+  load();
 }
-
-function resetIdentity() {
+function resetPlayer() {
   localStorage.removeItem(playerKey);
   location.reload();
 }
-
-if (currentPlayer) {
-  showIdentity(currentPlayer);
-}
-
-select.onchange = () => {
-  const name = select.value;
-  if (name) showIdentity(name);
+if (currentPlayer) setPlayer(currentPlayer);
+playerSelect.onchange = () => {
+  const name = playerSelect.value;
+  if (name) setPlayer(name);
 };
 </script>
 </body>
