@@ -4,18 +4,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Puzzle Power – Winner Highlighting</title>
+  <title>Puzzle Power – DNF Demo</title>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #f7f7f7; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { border: 1px solid #ccc; padding: 0.5rem; vertical-align: top; }
     .winner { background: #d4edda; font-weight: bold; }
-    textarea { width: 100%; height: 60px; }
-    button { padding: 0.5rem 1rem; background: #007aff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    .dnf { color: red; font-style: italic; }
   </style>
 </head>
 <body>
-  <h1>🧩 Puzzle Power – Winner Highlighting (Increment 1)</h1>
+  <h1>🧩 Puzzle Power – Winner + DNF Demo</h1>
   <table>
     <thead>
       <tr>
@@ -30,20 +29,33 @@
 
   <script>
     const puzzles = ["Connections", "Strands", "Wordle", "Mini Crossword"];
+
+    // Simulated current time: 12:45am (past 30-minute DNF window)
+    const demoCurrentHour = 0;
+    const demoCurrentMin = 45;
+
     const dummyResults = {
       Adam: {
-        "Connections": "4 guesses",
+        "Connections": null, // Adam forgot
         "Strands": "9 guesses, 1 hint",
         "Wordle": "5/6",
         "Mini Crossword": "1:12"
       },
       Jonathan: {
         "Connections": "5 guesses",
-        "Strands": "9 guesses, 2 hints",
+        "Strands": null, // Jonathan forgot
         "Wordle": "4/6",
         "Mini Crossword": "1:18"
       }
     };
+
+    function isAfterDNFTime() {
+      return demoCurrentHour > 0 || demoCurrentMin >= 30;
+    }
+
+    function labelResult(result) {
+      return result ? result : (isAfterDNFTime() ? "DNF" : "");
+    }
 
     function determineWinner(puzzle, aResult, jResult) {
       const parseTime = s => {
@@ -51,7 +63,15 @@
         return parts.length === 2 ? (parseInt(parts[0]) * 60 + parseInt(parts[1])) : Infinity;
       };
 
+      const adamForfeit = !aResult && isAfterDNFTime();
+      const jonForfeit = !jResult && isAfterDNFTime();
+
+      if (adamForfeit && !jonForfeit) return "Jonathan";
+      if (jonForfeit && !adamForfeit) return "Adam";
+      if (adamForfeit && jonForfeit) return "None";
+
       if (!aResult || !jResult) return "";
+
       if (puzzle === "Mini Crossword") {
         const a = parseTime(aResult);
         const j = parseTime(jResult);
@@ -79,18 +99,24 @@
     const tbody = document.getElementById("puzzle-rows");
     puzzles.forEach(puzzle => {
       const row = document.createElement("tr");
-      const winner = determineWinner(puzzle, dummyResults.Adam[puzzle], dummyResults.Jonathan[puzzle]);
+      const aRaw = dummyResults.Adam[puzzle];
+      const jRaw = dummyResults.Jonathan[puzzle];
+      const aDisplay = labelResult(aRaw);
+      const jDisplay = labelResult(jRaw);
+      const winner = determineWinner(puzzle, aRaw, jRaw);
 
       const td1 = document.createElement("td");
       td1.textContent = puzzle;
 
       const td2 = document.createElement("td");
-      td2.textContent = dummyResults.Adam[puzzle];
-      if (winner === "Adam") td2.className = "winner";
+      td2.textContent = aDisplay;
+      if (aDisplay === "DNF") td2.classList.add("dnf");
+      else if (winner === "Adam") td2.classList.add("winner");
 
       const td3 = document.createElement("td");
-      td3.textContent = dummyResults.Jonathan[puzzle];
-      if (winner === "Jonathan") td3.className = "winner";
+      td3.textContent = jDisplay;
+      if (jDisplay === "DNF") td3.classList.add("dnf");
+      else if (winner === "Jonathan") td3.classList.add("winner");
 
       const td4 = document.createElement("td");
       td4.textContent = winner || "";
