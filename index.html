@@ -11,9 +11,10 @@
     .version { position: fixed; bottom: 0.5em; right: 1em; font-size: 0.85em; color: #aaa; }
     table { width: 100%; border-collapse: collapse; margin-top: 1em; }
     th, td { border: 1px solid #ccc; padding: 0.6em; text-align: center; }
-    th.puzzle { text-align: left; }
+    th.puzzle, td.puzzle { text-align: left; }
     textarea { width: 95%; height: 4em; }
     button { margin-top: 0.5em; }
+    .submitted { background-color: #f4f4f4; }
   </style>
 </head>
 <body>
@@ -21,23 +22,25 @@
   <div class="subtitle">If you ain’t first, you’re last</div>
 
   <div id="identityArea">
-    <select id="playerPicker">
-      <option value="">Who are you?</option>
-      <option value="Adam">Adam</option>
-      <option value="Jonathan">Jonathan</option>
-    </select>
+    <label>Signed in as:
+      <select id="playerPicker">
+        <option value="">(choose)</option>
+        <option value="Adam">Adam 🌵</option>
+        <option value="Jonathan">Jonathan 💩</option>
+      </select>
+    </label>
   </div>
 
   <div id="puzzleTableArea" style="display:none;">
     <table>
       <thead>
-        <tr><th class="puzzle">Puzzle</th><th>Adam</th><th>Jonathan</th></tr>
+        <tr><th class="puzzle">Puzzle</th><th>Adam 🌵</th><th>Jonathan 💩</th></tr>
       </thead>
       <tbody id="puzzleTableBody"></tbody>
     </table>
   </div>
 
-  <div class="version">vE.1.0</div>
+  <div class="version">vE.1.1</div>
 
   <script>
     const puzzles = [
@@ -47,21 +50,13 @@
     ];
 
     let currentPlayer = null;
+    const results = { Adam: {}, Jonathan: {} };
 
-    document.getElementById("playerPicker").addEventListener("change", function() {
-      currentPlayer = this.value;
-      if (currentPlayer) {
-        localStorage.setItem("puzzle_player", currentPlayer);
-        loadPuzzleTable();
-      }
-    });
-
-    function loadPuzzleTable() {
-      document.getElementById("identityArea").style.display = "none";
+    function updatePuzzleTable() {
       document.getElementById("puzzleTableArea").style.display = "block";
-
       const body = document.getElementById("puzzleTableBody");
       body.innerHTML = "";
+
       puzzles.forEach(puzzle => {
         const row = document.createElement("tr");
         const label = document.createElement("td");
@@ -71,17 +66,35 @@
 
         ["Adam", "Jonathan"].forEach(name => {
           const cell = document.createElement("td");
-          if (name === currentPlayer) {
+          cell.classList.add("player-" + name.toLowerCase());
+
+          if (results[name][puzzle]) {
+            const resultDiv = document.createElement("div");
+            resultDiv.textContent = results[name][puzzle];
+            resultDiv.className = "submitted";
+            cell.appendChild(resultDiv);
+
+            if (name === currentPlayer) {
+              const editBtn = document.createElement("button");
+              editBtn.textContent = "Edit";
+              editBtn.onclick = () => editResult(puzzle, name);
+              cell.appendChild(document.createElement("br"));
+              cell.appendChild(editBtn);
+            }
+          } else if (name === currentPlayer) {
             const textarea = document.createElement("textarea");
             textarea.placeholder = "Paste result here";
-            const button = document.createElement("button");
-            button.textContent = "Submit";
+            textarea.id = `input-${puzzle}`;
+            const submitBtn = document.createElement("button");
+            submitBtn.textContent = "Submit";
+            submitBtn.onclick = () => submitResult(puzzle, name, textarea.value, cell);
             cell.appendChild(textarea);
             cell.appendChild(document.createElement("br"));
-            cell.appendChild(button);
+            cell.appendChild(submitBtn);
           } else {
             cell.textContent = "(waiting)";
           }
+
           row.appendChild(cell);
         });
 
@@ -89,12 +102,31 @@
       });
     }
 
+    function submitResult(puzzle, name, value, cell) {
+      if (!value.trim()) return;
+      results[name][puzzle] = value.trim();
+      updatePuzzleTable();
+    }
+
+    function editResult(puzzle, name) {
+      delete results[name][puzzle];
+      updatePuzzleTable();
+    }
+
+    document.getElementById("playerPicker").addEventListener("change", function() {
+      currentPlayer = this.value;
+      if (currentPlayer) {
+        localStorage.setItem("puzzle_player", currentPlayer);
+        updatePuzzleTable();
+      }
+    });
+
     window.addEventListener("DOMContentLoaded", () => {
       const stored = localStorage.getItem("puzzle_player");
       if (stored) {
         document.getElementById("playerPicker").value = stored;
         currentPlayer = stored;
-        loadPuzzleTable();
+        updatePuzzleTable();
       }
     });
   </script>
