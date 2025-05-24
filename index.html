@@ -3,161 +3,77 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🧠 I’m Puzzled ‼️</title>
   <style>
-    body { font-family: sans-serif; margin: 2em; }
-    h1 { text-align: center; font-size: 2em; margin-bottom: 0.2em; }
-    .subtitle { text-align: center; font-size: 0.95em; margin-top: -10px; margin-bottom: 1.5em; color: #555; }
-    .version { position: fixed; bottom: 0.5em; right: 1em; font-size: 0.85em; color: #aaa; }
-    table { width: 100%; border-collapse: collapse; margin-top: 1em; table-layout: fixed; }
-    th, td { border: 1px solid #ccc; padding: 0.6em; text-align: center; vertical-align: top; word-wrap: break-word; }
-    th.puzzle, td.puzzle { text-align: left; width: 33%; }
-    td.player-Adam, td.player-Jonathan { width: 33%; }
-    textarea { width: 95%; height: 4em; }
-    button { margin-top: 0.5em; }
-    .submitted { background-color: #f4f4f4; white-space: pre-wrap; }
-    .winner { background-color: #d4f4d7; }
-    .tie { background-color: #fff8c6; }
-    .note { font-size: 0.85em; color: #555; margin-top: 0.25em; display: block; }
+    body { font-family: system-ui, sans-serif; margin: 1em; font-size: 17px; }
+    h1 { text-align: center; margin-bottom: 0; }
+    .subtitle { text-align: center; font-size: 1em; color: #555; margin-bottom: 1.5em; }
+    select { font-size: 1em; }
+    .version { position: fixed; bottom: 0.5em; right: 1em; font-size: 0.85em; color: #999; }
+    .result { white-space: pre-wrap; background: #f0f0f0; padding: 0.5em; border-radius: 5px; margin-bottom: 0.5em; }
+    .winner { background: #d6f5d6; }
+    .tie { background: #fff5c2; }
   </style>
 </head>
 <body>
   <h1>🧠 I’m Puzzled ‼️</h1>
   <div class="subtitle">If you ain’t first, you’re last</div>
-
-  <div id="identityArea">
-    <label>Signed in as:
-      <select id="playerPicker">
-        <option value="">(choose)</option>
-        <option value="Adam">Adam 🌵</option>
-        <option value="Jonathan">Jonathan 💩</option>
-      </select>
-    </label>
-  </div>
-
-  <div id="puzzleTableArea" style="display:none;">
-    <table>
-      <thead>
-        <tr><th class="puzzle">Puzzle</th><th>Adam 🌵</th><th>Jonathan 💩</th></tr>
-      </thead>
-      <tbody id="puzzleTableBody"></tbody>
-    </table>
-  </div>
-
-  <div class="version">vE.1.2</div>
+  <label for="playerPicker">Signed in as: 
+    <select id="playerPicker">
+      <option value="">(choose)</option>
+      <option value="Adam">Adam 🌵</option>
+      <option value="Jonathan">Jonathan 💩</option>
+    </select>
+  </label>
+  <div id="content" style="margin-top:2em;"></div>
+  <div class="version">vE.1.3 - Increment 1</div>
 
   <script>
-    const puzzles = [
-      "Connections", "Strands", "News Quiz", "Keyword",
-      "Mini Crossword", "Apple News Crossword", "Globle",
-      "Flagle", "Wordle", "Tightrope"
-    ];
+    const content = document.getElementById("content");
+    const results = {
+      "Connections": { "Adam": "🟨🟨🟨🟨\n🟦🟦🟦🟦\n🟩🟩🟩🟩\n🟪🟪🟪🟪", "Jonathan": "🟨🟨🟨🟨\n🟦🟦🟦🟦\n🟩🟩🟩🟩\n🟪🟪🟪🟪" },
+      "Wordle": { "Adam": "Wordle 1434 3/6", "Jonathan": "Wordle 1434 4/6" }
+    };
 
-    let currentPlayer = null;
-    const results = { Adam: {}, Jonathan: {} };
+    function renderTable(player) {
+      content.innerHTML = "";
+      for (const [puzzle, entries] of Object.entries(results)) {
+        const player1 = entries["Adam"];
+        const player2 = entries["Jonathan"];
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = `<strong>${puzzle}</strong><br>`;
 
-    function updatePuzzleTable() {
-      document.getElementById("puzzleTableArea").style.display = "block";
-      const body = document.getElementById("puzzleTableBody");
-      body.innerHTML = "";
+        const div1 = document.createElement("div");
+        div1.className = "result";
+        div1.textContent = player1;
+        const div2 = document.createElement("div");
+        div2.className = "result";
+        div2.textContent = player2;
 
-      puzzles.forEach(puzzle => {
-        const row = document.createElement("tr");
-        const label = document.createElement("td");
-        label.textContent = puzzle;
-        label.className = "puzzle";
-        row.appendChild(label);
-
-        const adamResult = results["Adam"][puzzle];
-        const jonResult = results["Jonathan"][puzzle];
-        let winner = null;
-        let isTie = false;
-
-        if (adamResult && jonResult) {
-          if (adamResult === jonResult) {
-            isTie = true;
-          } else {
-            winner = adamResult.length < jonResult.length ? "Adam" : "Jonathan";
-          }
+        // Wordle logic example
+        if (puzzle === "Wordle" && player1 && player2) {
+          const num1 = parseInt(player1.split(" ")[2]) || 7;
+          const num2 = parseInt(player2.split(" ")[2]) || 7;
+          if (num1 < num2) div1.classList.add("winner");
+          else if (num2 < num1) div2.classList.add("winner");
+          else { div1.classList.add("tie"); div2.classList.add("tie"); }
         }
 
-        ["Adam", "Jonathan"].forEach(name => {
-          const cell = document.createElement("td");
-          cell.classList.add("player-" + name);
-          const entry = results[name][puzzle];
+        // Connections tiebreaker placeholder
+        if (puzzle === "Connections" && player1 && player2) {
+          div1.classList.add("winner"); // hardcoded for testing
+        }
 
-          if (entry) {
-            const resultDiv = document.createElement("div");
-            resultDiv.textContent = entry;
-            resultDiv.className = "submitted";
-            resultDiv.style.whiteSpace = "pre-wrap";
-
-            if (winner === name) {
-              resultDiv.classList.add("winner");
-            } else if (isTie) {
-              resultDiv.classList.add("tie");
-            }
-
-            cell.appendChild(resultDiv);
-
-            if (name === currentPlayer) {
-              const editBtn = document.createElement("button");
-              editBtn.textContent = "Edit";
-              editBtn.onclick = () => editResult(puzzle, name, entry);
-              cell.appendChild(document.createElement("br"));
-              cell.appendChild(editBtn);
-            }
-          } else if (name === currentPlayer) {
-            const textarea = document.createElement("textarea");
-            textarea.placeholder = "Paste result here";
-            textarea.value = "";
-            textarea.id = `input-${puzzle}`;
-            const submitBtn = document.createElement("button");
-            submitBtn.textContent = "Submit";
-            submitBtn.onclick = () => submitResult(puzzle, name, textarea.value);
-            cell.appendChild(textarea);
-            cell.appendChild(document.createElement("br"));
-            cell.appendChild(submitBtn);
-          } else {
-            cell.textContent = "(waiting)";
-          }
-
-          row.appendChild(cell);
-        });
-
-        body.appendChild(row);
-      });
-    }
-
-    function submitResult(puzzle, name, value) {
-      if (!value.trim()) return;
-      results[name][puzzle] = value.trim();
-      updatePuzzleTable();
-    }
-
-    function editResult(puzzle, name, original) {
-      const newInput = prompt("Edit your result:", original);
-      if (newInput !== null) {
-        results[name][puzzle] = newInput;
-        updatePuzzleTable();
+        wrapper.appendChild(div1);
+        wrapper.appendChild(div2);
+        content.appendChild(wrapper);
       }
     }
 
-    document.getElementById("playerPicker").addEventListener("change", function() {
-      currentPlayer = this.value;
-      if (currentPlayer) {
-        localStorage.setItem("puzzle_player", currentPlayer);
-        updatePuzzleTable();
-      }
-    });
-
-    window.addEventListener("DOMContentLoaded", () => {
-      const stored = localStorage.getItem("puzzle_player");
-      if (stored) {
-        document.getElementById("playerPicker").value = stored;
-        currentPlayer = stored;
-        updatePuzzleTable();
-      }
+    document.getElementById("playerPicker").addEventListener("change", e => {
+      const selected = e.target.value;
+      if (selected) renderTable(selected);
     });
   </script>
 </body>
