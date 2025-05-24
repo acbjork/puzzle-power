@@ -44,7 +44,7 @@
     </thead>
     <tbody id="puzzleBody"></tbody>
   </table>
-  <div class="version" id="versionFooter">vD.3.3.2</div>
+  <div class="version" id="versionFooter">vD.3.3.3</div>
 <script>
 
 const supabase = window.supabase.createClient(
@@ -243,7 +243,7 @@ function renderTable(data) {
 }
 </script>
 <script>
-console.log("App loaded and ready: vD.3.3.2");
+console.log("App loaded and ready: vD.3.3.3");
 
 if (currentPlayer) {
   console.log("Current player detected:", currentPlayer);
@@ -254,7 +254,7 @@ if (currentPlayer) {
 </script>
 
 <script>
-console.log("Script loaded: vD.3.3.2");
+console.log("Script loaded: vD.3.3.3");
 
 function displayFallbackError(message) {
   const statusBox = document.getElementById("status");
@@ -277,7 +277,7 @@ try {
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM fully loaded - App launching (vD.3.3.2)");
+  console.log("DOM fully loaded - App launching (vD.3.3.3)");
   try {
     const stored = localStorage.getItem("puzzle_player");
     if (stored) {
