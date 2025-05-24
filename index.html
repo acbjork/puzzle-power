@@ -4,19 +4,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Puzzle Power – Supabase Fetch</title>
+  <title>Puzzle Power – Increment B</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #f7f7f7; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { border: 1px solid #ccc; padding: 0.5rem; vertical-align: top; }
     textarea { width: 100%; height: 60px; }
-    .readonly { background: #eee; color: #666; }
+    pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; }
+    .readonly { background: #eee; color: #333; }
+    .winner { background: #d4edda; font-weight: bold; }
     button { padding: 0.5rem 1rem; background: #007aff; color: white; border: none; margin-top: 0.5rem; cursor: pointer; border-radius: 5px; }
   </style>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – Supabase Live Results</h1>
+  <h1>🧠 Puzzle Power – Increment B</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select your name</option>
@@ -50,8 +52,45 @@
     const table = document.getElementById("resultsTable");
     const body = document.getElementById("puzzleBody");
 
+    function determineWinner(puzzle, aResult, jResult) {
+      const parseTime = s => {
+        const parts = s.split(":");
+        return parts.length === 2 ? (parseInt(parts[0]) * 60 + parseInt(parts[1])) : Infinity;
+      };
+
+      if (!aResult || !jResult) return "";
+
+      if (puzzle === "Mini Crossword" || puzzle === "Apple News Crossword") {
+        const a = parseTime(aResult);
+        const j = parseTime(jResult);
+        if (a < j) return "Adam";
+        if (j < a) return "Jonathan";
+        return "Tie";
+      }
+
+      if (["Connections", "Strands", "Globle", "Flagle", "Wordle", "Keyword"].includes(puzzle)) {
+        const a = parseInt(aResult);
+        const j = parseInt(jResult);
+        if (isNaN(a) || isNaN(j)) return "";
+        if (a < j) return "Adam";
+        if (j < a) return "Jonathan";
+        return "Tie";
+      }
+
+      if (puzzle === "News Quiz" || puzzle === "Tightrope") {
+        const a = parseInt(aResult);
+        const j = parseInt(jResult);
+        if (a > j) return "Adam";
+        if (j > a) return "Jonathan";
+        return "Tie";
+      }
+
+      return "";
+    }
+
     async function loadData() {
       otherPlayer = currentPlayer === "Adam" ? "Jonathan" : "Adam";
+
       const { data: otherData } = await client.from("results")
         .select("puzzle_name, raw_result")
         .eq("date", today).eq("player", otherPlayer);
@@ -68,18 +107,26 @@
       puzzles.forEach(puzzle => {
         const row = document.createElement("tr");
 
+        const aResult = myMap[puzzle] || "";
+        const jResult = theirMap[puzzle] || "";
+        const winner = determineWinner(puzzle, aResult, jResult);
+
         const tdName = document.createElement("td");
         tdName.textContent = puzzle;
 
         const tdInput = document.createElement("td");
         const textarea = document.createElement("textarea");
         textarea.id = `input-${puzzle}`;
-        textarea.value = myMap[puzzle] || "";
+        textarea.value = aResult;
+        if (winner === currentPlayer) tdInput.classList.add("winner");
         tdInput.appendChild(textarea);
 
         const tdOther = document.createElement("td");
+        const pre = document.createElement("pre");
+        pre.textContent = jResult;
         tdOther.className = "readonly";
-        tdOther.textContent = theirMap[puzzle] || "";
+        if (winner === otherPlayer) tdOther.classList.add("winner");
+        tdOther.appendChild(pre);
 
         const tdSubmit = document.createElement("td");
         const button = document.createElement("button");
@@ -94,6 +141,7 @@
             raw_result: result
           }], { onConflict: ["date", "puzzle_name", "player"] });
           alert("Result saved.");
+          loadData();
         };
         tdSubmit.appendChild(button);
 
