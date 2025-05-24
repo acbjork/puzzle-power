@@ -3,25 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🧠  I’m Puzzled ‼️ — D.2.2 (Full Diagnostic)</title>
+  <title>🧠  I’m Puzzled ‼️ — D.3</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #fff; }
+    h1 { margin-bottom: 0; }
+    .subtitle { font-size: 0.9em; color: #555; margin-top: 0.2em; margin-bottom: 1.5em; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { border: 1px solid #ccc; padding: 0.5rem; vertical-align: top; }
     th:first-child, td:first-child { text-align: left; }
     th:not(:first-child), td:not(:first-child) { text-align: center; }
     th { font-size: 1.1em; }
     textarea, pre { width: 100%; font-family: inherit; margin: 0; padding: 0.25rem; box-sizing: border-box; }
-    pre { line-height: 1.1; padding: 0.25rem 0; white-space: pre-wrap; }
+    pre { line-height: 1.1; padding: 0.25rem 0; white-space: pre-wrap; word-break: break-word; }
     .winner { background: #d4edda !important; font-weight: bold; }
     .tie { background: #fff3cd !important; font-weight: bold; }
-    .note { font-size: 0.75rem; font-style: italic; margin-top: 2px; }
+    .warning { color: #b8860b; font-weight: bold; font-size: 0.8em; margin-bottom: 0.25rem; }
+    .note { font-size: 0.75em; font-style: italic; margin-top: 2px; }
     .version { font-size: 0.8rem; color: #888; position: fixed; bottom: 4px; right: 8px; }
   </style>
 </head>
 <body>
-  <h1>🧠&nbsp;&nbsp;I’m Puzzled&nbsp;‼️ — D.2.2 (Full Diagnostic)</h1>
+  <h1>🧠  I’m Puzzled ‼️</h1>
+  <p class="subtitle">If you ain’t first, you’re last.</p>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select</option>
@@ -39,8 +43,7 @@
     </thead>
     <tbody id="puzzleBody"></tbody>
   </table>
-  <div class="version">vD.2.2</div>
-
+  <div class="version">vD.3</div>
 <script>
 const supabase = window.supabase.createClient(
   "https://iqhgsdpqqshfeiqrkrqw.supabase.co",
@@ -51,49 +54,119 @@ const puzzles = ["Connections", "Wordle", "Mini Crossword", "Keyword", "Strands"
 const playerKey = "puzzle-player";
 let currentPlayer = localStorage.getItem(playerKey) || "";
 
+function parseWordle(text) {
+  const m = text.match(/Wordle\s+([\d,]+)\s+(\d|X)\/6/i);
+  if (!m) return null;
+  return { puzzle: parseInt(m[1].replace(/,/g, "")), score: m[2] === "X" ? 7 : parseInt(m[2]) };
+}
+function parseConnections(text) {
+  const rowCount = (text.match(/[🟨🟦🟩🟪]{4}/g) || []).length;
+  const purpleLine = text.split(/\r?\n/).findIndex(row => row.trim() === "🟪🟪🟪🟪");
+  return { guesses: rowCount, purpleLine };
+}
+function parseStrands(text) {
+  const hints = (text.match(/💡/g) || []).length;
+  const spangramLine = text.split(/\r?\n/).findIndex(row => row.includes("🟡"));
+  const words = (text.match(/[“”"][^””"]+[””"]/g) || []).length;
+  return { words, hints, spangramLine };
+}
+function parseKeyword(text) {
+  const guesses = parseInt(text.match(/\|(\d+) guesses/i)?.[1] || "999");
+  const t = text.match(/\|(\d+):(\d{2})/) || [];
+  const seconds = parseInt(t[1] || 0) * 60 + parseInt(t[2] || 0);
+  return { guesses, seconds };
+}
+function parseMiniDate(text) {
+  const match = text.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+  if (!match) return null;
+  return new Date(match[1]);
+}
+function isSameEasternDate(targetDate) {
+  const now = new Date();
+  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+  const eastern = new Date(utc + (-4 * 3600000));
+  return targetDate.getFullYear() === eastern.getFullYear() &&
+         targetDate.getMonth() === eastern.getMonth() &&
+         targetDate.getDate() === eastern.getDate();
+}
+
+function determineWinner(puzzle, a, j) {
+  if (!a || !j) return {};
+  if (puzzle === "Wordle") {
+    const pa = parseWordle(a), pj = parseWordle(j);
+    if (!pa || !pj) return {};
+    if (pa.puzzle !== pj.puzzle) return { warn: "Discordant puzzle versions" };
+    if (pa.score < pj.score) return { winner: "Adam" };
+    if (pj.score < pa.score) return { winner: "Jonathan" };
+    return { winner: "Tie" };
+  }
+  if (puzzle === "Connections") {
+    const ca = parseConnections(a), cj = parseConnections(j);
+    if (ca.guesses < cj.guesses) return { winner: "Adam" };
+    if (cj.guesses < ca.guesses) return { winner: "Jonathan" };
+    if (ca.purpleLine < cj.purpleLine) return { winner: "Adam", note: "Won on tiebreaker (purple row)" };
+    if (cj.purpleLine < ca.purpleLine) return { winner: "Jonathan", note: "Won on tiebreaker (purple row)" };
+    return { winner: "Tie" };
+  }
+  if (puzzle === "Strands") {
+    const sa = parseStrands(a), sj = parseStrands(j);
+    if (sa.words < sj.words) return { winner: "Adam" };
+    if (sj.words < sa.words) return { winner: "Jonathan" };
+    if (sa.hints < sj.hints) return { winner: "Adam", note: "Won on tiebreaker (hints)" };
+    if (sj.hints < sa.hints) return { winner: "Jonathan", note: "Won on tiebreaker (hints)" };
+    if (sa.spangramLine < sj.spangramLine) return { winner: "Adam", note: "Won on tiebreaker (Spangram)" };
+    if (sj.spangramLine < sa.spangramLine) return { winner: "Jonathan", note: "Won on tiebreaker (Spangram)" };
+    return { winner: "Tie" };
+  }
+  if (puzzle === "Keyword") {
+    const ka = parseKeyword(a), kj = parseKeyword(j);
+    if (ka.guesses < kj.guesses) return { winner: "Adam" };
+    if (kj.guesses < ka.guesses) return { winner: "Jonathan" };
+    if (ka.seconds < kj.seconds) return { winner: "Adam", note: "Won on tiebreaker (time)" };
+    if (kj.seconds < ka.seconds) return { winner: "Jonathan", note: "Won on tiebreaker (time)" };
+    return { winner: "Tie" };
+  }
+  return {};
+}
+
 const status = document.getElementById("status");
 const playerSelect = document.getElementById("playerSelect");
 const puzzleBody = document.getElementById("puzzleBody");
 const resultsTable = document.getElementById("resultsTable");
 
-async function submitResult(puzzle, player, inputId) {
-  const text = document.getElementById(inputId).value.trim();
-  if (!text) return;
-  const { error } = await supabase.from("results").insert([{ date: today, player, puzzle_name: puzzle, raw_result: text }]);
-  if (error) {
-    console.error("Supabase insert error:", error);
-    status.textContent = "Insert error: " + error.message;
-  } else {
-    status.textContent = "";
-    load();
-  }
-}
-
 function setPlayer(name) {
-  currentPlayer = name;
   localStorage.setItem(playerKey, name);
-  document.getElementById("identityPrompt").innerHTML =
-    `You are logged in as ${name}. <a href='#' onclick='resetPlayer()'>Not you?</a>`;
+  currentPlayer = name;
+  document.getElementById("identityPrompt").innerHTML = `You are logged in as ${name}. <a href="#" onclick="resetPlayer()">Not you?</a>`;
   playerSelect.style.display = "none";
   load();
 }
-
 function resetPlayer() {
   localStorage.removeItem(playerKey);
   location.reload();
 }
+playerSelect.onchange = () => {
+  if (playerSelect.value) setPlayer(playerSelect.value);
+};
+
+async function submitResult(puzzle, player, inputId) {
+  const value = document.getElementById(inputId).value.trim();
+  if (!value) return;
+  const { error } = await supabase.from("results").insert([{ date: today, player, puzzle_name: puzzle, raw_result: value }]);
+  if (error) {
+    status.textContent = "Error: " + error.message;
+    console.error("Insert error:", error);
+  } else {
+    load();
+  }
+}
 
 async function load() {
-  const result = await supabase.from("results").select("*").eq("date", today);
-  const data = result.data;
-  if (result.error || !data) {
+  const { data, error } = await supabase.from("results").select("*").eq("date", today);
+  if (error || !data) {
     status.textContent = "Error loading results";
     return;
   }
-  renderTable(data);
-}
-
-function renderTable(data) {
   const map = {};
   data.forEach(r => {
     if (!map[r.puzzle_name]) map[r.puzzle_name] = {};
@@ -101,30 +174,40 @@ function renderTable(data) {
   });
 
   puzzleBody.innerHTML = "";
-  puzzles.forEach(p => {
+  puzzles.forEach(puzzle => {
     const row = document.createElement("tr");
-    row.innerHTML = `<td>${p}</td>` +
-      `<td>${renderCell(p, "Adam", map[p]?.Adam)}</td>` +
-      `<td>${renderCell(p, "Jonathan", map[p]?.Jonathan)}</td>`;
+    const a = map[puzzle]?.Adam || "";
+    const j = map[puzzle]?.Jonathan || "";
+    const winnerData = determineWinner(puzzle, a, j);
+    row.innerHTML = `
+      <td>${puzzle}</td>
+      <td class="${winnerData.winner === "Adam" ? "winner" : winnerData.winner === "Tie" ? "tie" : ""}">
+        ${renderCell(puzzle, "Adam", a, winnerData)}
+      </td>
+      <td class="${winnerData.winner === "Jonathan" ? "winner" : winnerData.winner === "Tie" ? "tie" : ""}">
+        ${renderCell(puzzle, "Jonathan", j, winnerData)}
+      </td>`;
     puzzleBody.appendChild(row);
   });
+
   resultsTable.style.display = "table";
 }
 
-function renderCell(puzzle, player, raw) {
+function renderCell(puzzle, player, raw, winnerData) {
+  const editable = player === currentPlayer && !raw;
   const id = `input-${puzzle}-${player}`.replace(/\s+/g, "");
-  const editable = currentPlayer === player && !raw;
+  const note = winnerData?.note && winnerData.winner === player ? `<div class="note">${winnerData.note}</div>` : "";
+  const warn = (puzzle === "Wordle" && winnerData?.warn) ? `<div class="warning">${winnerData.warn}</div>` :
+               (puzzle === "Mini Crossword" && raw && !isSameEasternDate(parseMiniDate(raw) || new Date())) ? `<div class="warning">Discordant puzzle date</div>` : "";
+
   if (editable) {
-    return `<textarea id="${id}" rows="4" placeholder="Paste result..."></textarea><br><button onclick="submitResult('${puzzle}','${player}','${id}')">Submit</button>`;
+    return `<textarea id="${id}" rows="4"></textarea><br><button onclick="submitResult('${puzzle}','${player}','${id}')">Submit</button>`;
   } else {
-    return raw ? `<pre>${raw}</pre>` : "";
+    return `${warn}<pre>${raw}</pre>${note}`;
   }
 }
 
 if (currentPlayer) setPlayer(currentPlayer);
-playerSelect.onchange = () => {
-  if (playerSelect.value) setPlayer(playerSelect.value);
-};
 </script>
 </body>
 </html>
