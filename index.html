@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🧠 Puzzle Power – C.4.6</title>
+  <title>🧠 I’m Puzzled‼️</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #fff; }
@@ -20,7 +20,7 @@
   </style>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – C.4.6</h1>
+  <h1>🧠 I’m Puzzled‼️</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select</option>
@@ -32,6 +32,7 @@
     <thead><tr><th>Puzzle</th><th>Adam</th><th>Jonathan</th></tr></thead>
     <tbody id="puzzleBody"></tbody>
   </table>
+
 <script>
 const supabaseUrl = "https://iqhgsdpqqshfeiqrkrqw.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxaGdzZHBxcXNoZmVpcXJrcnF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NjExMDAsImV4cCI6MjA2MzQzNzEwMH0.W3eH88RD9s3pmuVlA-H7VIfVWLq_ymtj22JLd2f9Cec";
@@ -83,18 +84,31 @@ async function load() {
     status.textContent = "Supabase failed to load.";
     return;
   }
-  const { data, error } = await supabase.from("results").select("*").eq("date", today);
-  if (error || !data) {
-    status.textContent = "Error loading results.";
-    return;
+  try {
+    const { data, error } = await supabase.from("results").select("*").eq("date", today);
+    if (error) {
+      status.textContent = "Supabase error: " + error.message;
+      console.error("Supabase error:", error);
+      return;
+    }
+    if (!data || data.length === 0) {
+      status.textContent = "No puzzle data found.";
+      return;
+    }
+    status.textContent = "";
+    renderTable(data);
+  } catch (err) {
+    status.textContent = "Unexpected error: " + err.message;
+    console.error("Unexpected error:", err);
   }
-  status.textContent = "";
+}
+
+function renderTable(data) {
   const map = {};
   data.forEach(r => {
     if (!map[r.puzzle_name]) map[r.puzzle_name] = {};
     map[r.puzzle_name][r.player] = r.raw_result;
   });
-
   puzzleBody.innerHTML = "";
   puzzles.forEach(p => {
     const a = map[p]?.Adam || "", j = map[p]?.Jonathan || "";
@@ -112,39 +126,9 @@ async function load() {
         w.textContent = "Discordant puzzle versions";
         div.appendChild(w);
       }
-      if (name === currentPlayer) {
-        const ta = document.createElement("textarea");
-        ta.value = val;
-        ta.style.display = val ? "none" : "block";
-        const pre = document.createElement("pre");
-        pre.textContent = val;
-        pre.style.display = val ? "block" : "none";
-        const sb = document.createElement("button");
-        sb.textContent = "Submit";
-        sb.className = "submit-btn";
-        sb.style.display = val ? "none" : "inline-block";
-        sb.onclick = async () => {
-          const result = ta.value.trim();
-          if (!result) return;
-          await supabase.from("results").upsert([{ date: today, puzzle_name: p, player: name, raw_result: result }]);
-          load();
-        };
-        const eb = document.createElement("button");
-        eb.textContent = "Edit";
-        eb.className = "edit-btn";
-        eb.style.display = val ? "inline-block" : "none";
-        eb.onclick = () => {
-          ta.style.display = "block";
-          pre.style.display = "none";
-          sb.style.display = "inline-block";
-          eb.style.display = "none";
-        };
-        div.appendChild(pre); div.appendChild(ta); div.appendChild(sb); div.appendChild(eb);
-      } else {
-        const pre = document.createElement("pre");
-        pre.textContent = val;
-        div.appendChild(pre);
-      }
+      const pre = document.createElement("pre");
+      pre.textContent = val;
+      div.appendChild(pre);
       if (win) div.classList.add("winner");
       return div;
     }
