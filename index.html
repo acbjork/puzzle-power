@@ -5,54 +5,96 @@
   <meta charset="UTF-8">
   <title>🧠 I’m Puzzled ‼️</title>
   <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      margin-top: 40px;
-    }
-    h1 {
-      font-size: 2em;
-    }
-    .subtitle {
-      font-size: 0.95em;
-      margin-top: -10px;
-      margin-bottom: 30px;
-      color: #555;
-    }
-    #playerPicker {
-      display: block;
-      margin: 20px auto;
-      font-size: 1em;
-    }
-    .version {
-      position: fixed;
-      bottom: 0.5em;
-      right: 0.75em;
-      font-size: 0.85em;
-      color: #aaa;
-    }
+    body { font-family: sans-serif; margin: 2em; }
+    h1 { text-align: center; font-size: 2em; margin-bottom: 0.2em; }
+    .subtitle { text-align: center; font-size: 0.95em; margin-top: -10px; margin-bottom: 1.5em; color: #555; }
+    .version { position: fixed; bottom: 0.5em; right: 1em; font-size: 0.85em; color: #aaa; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1em; }
+    th, td { border: 1px solid #ccc; padding: 0.6em; text-align: center; }
+    th.puzzle { text-align: left; }
+    textarea { width: 95%; height: 4em; }
+    button { margin-top: 0.5em; }
   </style>
 </head>
 <body>
   <h1>🧠 I’m Puzzled ‼️</h1>
   <div class="subtitle">If you ain’t first, you’re last</div>
-  <select id="playerPicker">
-    <option value="">Who are you?</option>
-    <option value="Adam">Adam</option>
-    <option value="Jonathan">Jonathan</option>
-  </select>
-  <div id="resultsTableContainer"></div>
-  <div class="version">vD.3.3.12</div>
+
+  <div id="identityArea">
+    <select id="playerPicker">
+      <option value="">Who are you?</option>
+      <option value="Adam">Adam</option>
+      <option value="Jonathan">Jonathan</option>
+    </select>
+  </div>
+
+  <div id="puzzleTableArea" style="display:none;">
+    <table>
+      <thead>
+        <tr><th class="puzzle">Puzzle</th><th>Adam</th><th>Jonathan</th></tr>
+      </thead>
+      <tbody id="puzzleTableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="version">vE.1.0</div>
 
   <script>
-    console.log("App loaded and ready: vD.3.3.12");
+    const puzzles = [
+      "Connections", "Strands", "News Quiz", "Keyword",
+      "Mini Crossword", "Apple News Crossword", "Globle",
+      "Flagle", "Wordle", "Tightrope"
+    ];
+
+    let currentPlayer = null;
 
     document.getElementById("playerPicker").addEventListener("change", function() {
-      const player = this.value;
-      if (player) {
-        console.log("Player selected:", player);
-        document.getElementById("resultsTableContainer").innerHTML =
-          "<p>Results table will appear here for <strong>" + player + "</strong>.</p>";
+      currentPlayer = this.value;
+      if (currentPlayer) {
+        localStorage.setItem("puzzle_player", currentPlayer);
+        loadPuzzleTable();
+      }
+    });
+
+    function loadPuzzleTable() {
+      document.getElementById("identityArea").style.display = "none";
+      document.getElementById("puzzleTableArea").style.display = "block";
+
+      const body = document.getElementById("puzzleTableBody");
+      body.innerHTML = "";
+      puzzles.forEach(puzzle => {
+        const row = document.createElement("tr");
+        const label = document.createElement("td");
+        label.textContent = puzzle;
+        label.className = "puzzle";
+        row.appendChild(label);
+
+        ["Adam", "Jonathan"].forEach(name => {
+          const cell = document.createElement("td");
+          if (name === currentPlayer) {
+            const textarea = document.createElement("textarea");
+            textarea.placeholder = "Paste result here";
+            const button = document.createElement("button");
+            button.textContent = "Submit";
+            cell.appendChild(textarea);
+            cell.appendChild(document.createElement("br"));
+            cell.appendChild(button);
+          } else {
+            cell.textContent = "(waiting)";
+          }
+          row.appendChild(cell);
+        });
+
+        body.appendChild(row);
+      });
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const stored = localStorage.getItem("puzzle_player");
+      if (stored) {
+        document.getElementById("playerPicker").value = stored;
+        currentPlayer = stored;
+        loadPuzzleTable();
       }
     });
   </script>
