@@ -24,8 +24,8 @@
   </style>
 </head>
 <body>
-  <h1>🧠  I’m Puzzled ‼️</h1>
-  <p class="subtitle" style="text-align: center; font-size: 0.9em; color: #555; margin-top: -0.3em; margin-bottom: 1.2em;">If you ain’t first, you’re last.</p>
+  <h1 style="text-align:center;">🧠  I’m Puzzled ‼️</h1>
+  <p class="subtitle" style="text-align:center; font-size: 0.9em; color: #555; margin-top: -0.3em; margin-bottom: 1.2em;">If you ain’t first, you’re last.</p>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select</option>
@@ -120,7 +120,12 @@ function determineWinner(puzzle, a, j) {
   }
   if (puzzle === "Keyword") {
     const ka = parseKeyword(a), kj = parseKeyword(j);
-    if (ka.guesses < kj.guesses) return { winner: "Adam" }; if (kj.guesses < ka.guesses) return { winner: "Jonathan" }; if (ka.seconds < kj.seconds) return { winner: "Adam", note: "Won on tiebreaker (time)" }; if (kj.seconds < ka.seconds) return { winner: "Jonathan", note: "Won on tiebreaker (time)" }; return { winner: "Tie" };
+    if (ka.guesses < kj.guesses) return { winner: "Adam" };
+    if (kj.guesses < ka.guesses) return { winner: "Jonathan" };
+    if (ka.seconds < kj.seconds) return { winner: "Adam", note: "Won on tiebreaker (time)" };
+    if (kj.seconds < ka.seconds) return { winner: "Jonathan", note: "Won on tiebreaker (time)" };
+    return { winner: "Tie" };
+}; if (kj.guesses < ka.guesses) return { winner: "Jonathan" }; if (ka.seconds < kj.seconds) return { winner: "Adam", note: "Won on tiebreaker (time)" }; if (kj.seconds < ka.seconds) return { winner: "Jonathan", note: "Won on tiebreaker (time)" }; return { winner: "Tie" };
     if (kj.guesses < ka.guesses) return { winner: "Jonathan" };
     if (ka.seconds < kj.seconds) return { winner: "Adam", note: "Won on tiebreaker (time)" };
     if (kj.seconds < ka.seconds) return { winner: "Jonathan", note: "Won on tiebreaker (time)" };
