@@ -1,93 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🧠 Puzzle Power – C.4.4</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧠 Puzzle Power – C.4.5</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – C.4.4</h1>
+  <h1>🧠 Puzzle Power – C.4.5</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select</option>
     <option value="Adam">Adam</option>
     <option value="Jonathan">Jonathan</option>
   </select>
-  <div id="status" style="margin-top: 1rem; color: red;"></div>
+  <div id="status" style="margin-top:1rem;color:red;"></div>
   <table id="resultsTable" style="display:none;">
     <thead><tr><th>Puzzle</th><th>Adam</th><th>Jonathan</th></tr></thead>
     <tbody id="puzzleBody"></tbody>
   </table>
+
 <script>
-const supabase = supabase.createClient(
-  "https://iqhgsdpqqshfeiqrkrqw.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxaGdzZHBxcXNoZmVpcXJrcnF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NjExMDAsImV4cCI6MjA2MzQzNzEwMH0.W3eH88RD9s3pmuVlA-H7VIfVWLq_ymtj22JLd2f9Cec"
-);
+const status = document.getElementById("status");
+const playerSelect = document.getElementById("playerSelect");
+const identityPrompt = document.getElementById("identityPrompt");
+const puzzleBody = document.getElementById("puzzleBody");
+const resultsTable = document.getElementById("resultsTable");
+const puzzles = ["Connections", "Wordle"];
 const today = new Date().toISOString().split("T")[0];
 const playerKey = "puzzle-player";
 let currentPlayer = localStorage.getItem(playerKey) || "";
 
-const puzzles = ["Connections", "Wordle"];
-const identityPrompt = document.getElementById("identityPrompt");
-const playerSelect = document.getElementById("playerSelect");
-const resultsTable = document.getElementById("resultsTable");
-const puzzleBody = document.getElementById("puzzleBody");
-const status = document.getElementById("status");
-
-async function load() {
-  status.textContent = "Loading...";
-  try {
-    const { data, error } = await supabase.from("results").select("*").eq("date", today);
-    if (error) {
-      console.error("Supabase error:", error);
-      status.textContent = "Error fetching data: " + error.message;
-      return;
-    }
-    if (!data || data.length === 0) {
-      console.warn("No puzzle data found for today.");
-      status.textContent = "No puzzle data found for today.";
-      return;
-    }
-    status.textContent = "";
-    renderTable(data);
-  } catch (err) {
-    console.error("Unexpected error:", err);
-    status.textContent = "Unexpected error: " + err.message;
-  }
-}
-
-function renderTable(data) {
-  const map = {};
-  data.forEach(r => {
-    if (!map[r.puzzle_name]) map[r.puzzle_name] = {};
-    map[r.puzzle_name][r.player] = r.raw_result;
-  });
-  puzzleBody.innerHTML = "";
-  puzzles.forEach(p => {
-    const row = document.createElement("tr");
-    row.innerHTML = `<td>${p}</td><td>${map[p]?.Adam || ""}</td><td>${map[p]?.Jonathan || ""}</td>`;
-    puzzleBody.appendChild(row);
-  });
-  resultsTable.style.display = "table";
-}
-
-function setPlayer(name) {
-  currentPlayer = name;
-  localStorage.setItem(playerKey, name);
-  identityPrompt.innerHTML = `You are logged in as ${name}. <span onclick="resetPlayer()" style="color:#007aff;cursor:pointer;">Not you?</span>`;
+function fail(msg) {
+  console.error(msg);
+  status.textContent = msg;
   playerSelect.style.display = "none";
-  load();
 }
-function resetPlayer() {
-  localStorage.removeItem(playerKey);
-  location.reload();
+
+// Fallback in case supabase library didn't load
+if (typeof supabase === "undefined" || !supabase.createClient) {
+  fail("Supabase failed to load. Check your internet connection or try refreshing.");
+} else {
+  const client = supabase.createClient(
+    "https://iqhgsdpqqshfeiqrkrqw.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxaGdzZHBxcXNoZmVpcXJrcnF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NjExMDAsImV4cCI6MjA2MzQzNzEwMH0.W3eH88RD9s3pmuVlA-H7VIfVWLq_ymtj22JLd2f9Cec"
+  );
+
+  async function load() {
+    status.textContent = "Loading...";
+    try {
+      const { data, error } = await client.from("results").select("*").eq("date", today);
+      if (error) {
+        fail("Error loading data: " + error.message);
+        return;
+      }
+      if (!data || data.length === 0) {
+        status.textContent = "No puzzle data found.";
+        return;
+      }
+      status.textContent = "";
+      render(data);
+    } catch (e) {
+      fail("Unexpected error: " + e.message);
+    }
+  }
+
+  function render(data) {
+    const map = {};
+    data.forEach(r => {
+      if (!map[r.puzzle_name]) map[r.puzzle_name] = {};
+      map[r.puzzle_name][r.player] = r.raw_result;
+    });
+    puzzleBody.innerHTML = "";
+    puzzles.forEach(p => {
+      const row = document.createElement("tr");
+      row.innerHTML = `<td>${p}</td><td>${map[p]?.Adam || ""}</td><td>${map[p]?.Jonathan || ""}</td>`;
+      puzzleBody.appendChild(row);
+    });
+    resultsTable.style.display = "table";
+  }
+
+  function setPlayer(name) {
+    currentPlayer = name;
+    localStorage.setItem(playerKey, name);
+    identityPrompt.innerHTML = `You are logged in as ${name}. <span onclick="resetPlayer()" style="color:#007aff;cursor:pointer;">Not you?</span>`;
+    playerSelect.style.display = "none";
+    load();
+  }
+
+  function resetPlayer() {
+    localStorage.removeItem(playerKey);
+    location.reload();
+  }
+
+  if (currentPlayer) setPlayer(currentPlayer);
+  playerSelect.onchange = () => {
+    if (playerSelect.value) setPlayer(playerSelect.value);
+  };
 }
-if (currentPlayer) setPlayer(currentPlayer);
-playerSelect.onchange = () => {
-  const name = playerSelect.value;
-  if (name) setPlayer(name);
-};
 </script>
 </body>
 </html>
