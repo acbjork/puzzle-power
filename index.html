@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Puzzle Power – Increment B.6</title>
+  <title>Puzzle Power – Increment B.7 (Connections Demo)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; background: #f7f7f7; padding: 1rem; }
@@ -43,7 +43,7 @@
   </style>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – Increment B.6</h1>
+  <h1>🧠 Puzzle Power – B.7 (Connections Only)</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select your name</option>
@@ -62,11 +62,8 @@
     const SUPABASE_URL = "https://iqhgsdpqqshfeiqrkrqw.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxaGdzZHBxcXNoZmVpcXJrcnF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NjExMDAsImV4cCI6MjA2MzQzNzEwMH0.W3eH88RD9s3pmuVlA-H7VIfVWLq_ymtj22JLd2f9Cec";
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const puzzles = [
-      "Connections", "Strands", "News Quiz", "Keyword", "Mini Crossword",
-      "Apple News Crossword", "Globle", "Flagle", "Wordle", "Tightrope"
-    ];
 
+    const puzzles = ["Connections"];
     const playerKey = "puzzle-player";
     const today = new Date().toISOString().split("T")[0];
     let currentPlayer = localStorage.getItem(playerKey) || "";
@@ -82,44 +79,18 @@
       textarea.style.height = (textarea.scrollHeight + 2) + "px";
     }
 
-    function determineWinner(puzzle, aResult, jResult) {
-      const parseTime = s => {
-        const match = s.match(/(\d+):(\d+)/);
-        return match ? (parseInt(match[1]) * 60 + parseInt(match[2])) : Infinity;
-      };
-      const parseFirstNumber = s => {
-        const match = s.match(/\d+/);
-        return match ? parseInt(match[0]) : NaN;
-      };
+    function parseConnectionsGuesses(resultText) {
+      const lines = resultText.split(/\r?\n/);
+      return lines.filter(line => /[🟨🟩🟦🟪]/.test(line)).length;
+    }
 
+    function determineConnectionsWinner(aResult, jResult) {
       if (!aResult || !jResult) return "";
-
-      if (["Mini Crossword", "Apple News Crossword"].includes(puzzle)) {
-        const a = parseTime(aResult);
-        const j = parseTime(jResult);
-        if (a < j) return "Adam";
-        if (j < a) return "Jonathan";
-        return "Tie";
-      }
-
-      if (["Connections", "Strands", "Globle", "Flagle", "Wordle", "Keyword"].includes(puzzle)) {
-        const a = parseFirstNumber(aResult);
-        const j = parseFirstNumber(jResult);
-        if (isNaN(a) || isNaN(j)) return "";
-        if (a < j) return "Adam";
-        if (j < a) return "Jonathan";
-        return "Tie";
-      }
-
-      if (["News Quiz", "Tightrope"].includes(puzzle)) {
-        const a = parseFirstNumber(aResult);
-        const j = parseFirstNumber(jResult);
-        if (a > j) return "Adam";
-        if (j > a) return "Jonathan";
-        return "Tie";
-      }
-
-      return "";
+      const aGuesses = parseConnectionsGuesses(aResult);
+      const jGuesses = parseConnectionsGuesses(jResult);
+      if (aGuesses < jGuesses) return "Adam";
+      if (jGuesses < aGuesses) return "Jonathan";
+      return "Tie";
     }
 
     async function loadData() {
@@ -140,92 +111,94 @@
       otherData.forEach(row => theirMap[row.puzzle_name] = row.raw_result);
 
       body.innerHTML = "";
-      puzzles.forEach(puzzle => {
-        const row = document.createElement("tr");
+      const puzzle = "Connections";
+      const row = document.createElement("tr");
 
-        const aResult = myMap[puzzle] || "";
-        const jResult = theirMap[puzzle] || "";
-        const winner = determineWinner(puzzle, aResult, jResult);
+      const aResult = myMap[puzzle] || "";
+      const jResult = theirMap[puzzle] || "";
+      const winner = determineConnectionsWinner(
+        currentPlayer === "Adam" ? aResult : jResult,
+        currentPlayer === "Adam" ? jResult : aResult
+      );
 
-        const tdName = document.createElement("td");
-        tdName.textContent = puzzle;
+      const tdName = document.createElement("td");
+      tdName.textContent = puzzle;
 
-        const tdAdam = document.createElement("td");
-        const tdJon = document.createElement("td");
+      const tdAdam = document.createElement("td");
+      const tdJon = document.createElement("td");
 
-        const makeCell = (isSelf, result, player) => {
-          const container = document.createElement("div");
-          if (!isSelf && !result) return container;
-          if (isSelf) {
-            const saved = result !== "";
-            const pre = document.createElement("pre");
-            pre.textContent = result;
-            pre.style.display = saved ? "block" : "none";
+      const makeCell = (isSelf, result, player) => {
+        const container = document.createElement("div");
+        if (!isSelf && !result) return container;
+        if (isSelf) {
+          const saved = result !== "";
+          const pre = document.createElement("pre");
+          pre.textContent = result;
+          pre.style.display = saved ? "block" : "none";
 
-            const textarea = document.createElement("textarea");
-            textarea.value = result;
-            autoResize(textarea);
-            textarea.style.display = saved ? "none" : "block";
+          const textarea = document.createElement("textarea");
+          textarea.value = result;
+          autoResize(textarea);
+          textarea.style.display = saved ? "none" : "block";
 
-            const submitBtn = document.createElement("button");
-            submitBtn.className = "submit-btn";
-            submitBtn.textContent = "Submit";
-            submitBtn.style.display = saved ? "none" : "inline-block";
-            submitBtn.onclick = async () => {
-              const value = textarea.value.trim();
-              if (!value) return;
-              await client.from("results").upsert([{
-                date: today,
-                puzzle_name: puzzle,
-                player: player,
-                raw_result: value
-              }], { onConflict: ["date", "puzzle_name", "player"] });
-              loadData();
-            };
+          const submitBtn = document.createElement("button");
+          submitBtn.className = "submit-btn";
+          submitBtn.textContent = "Submit";
+          submitBtn.style.display = saved ? "none" : "inline-block";
+          submitBtn.onclick = async () => {
+            const value = textarea.value.trim();
+            if (!value) return;
+            await client.from("results").upsert([{
+              date: today,
+              puzzle_name: puzzle,
+              player: player,
+              raw_result: value
+            }], { onConflict: ["date", "puzzle_name", "player"] });
+            loadData();
+          };
 
-            const editBtn = document.createElement("button");
-            editBtn.className = "edit-btn";
-            editBtn.textContent = "Edit";
-            editBtn.style.display = saved ? "inline-block" : "none";
-            editBtn.onclick = () => {
-              textarea.style.display = "block";
-              pre.style.display = "none";
-              submitBtn.style.display = "inline-block";
-              editBtn.style.display = "none";
-            };
+          const editBtn = document.createElement("button");
+          editBtn.className = "edit-btn";
+          editBtn.textContent = "Edit";
+          editBtn.style.display = saved ? "inline-block" : "none";
+          editBtn.onclick = () => {
+            textarea.style.display = "block";
+            pre.style.display = "none";
+            submitBtn.style.display = "inline-block";
+            editBtn.style.display = "none";
+          };
 
-            container.appendChild(pre);
-            container.appendChild(textarea);
-            container.appendChild(submitBtn);
-            container.appendChild(editBtn);
-          } else if (result) {
-            const pre = document.createElement("pre");
-            pre.textContent = result;
-            container.className = "readonly";
-            container.appendChild(pre);
-          }
-          return container;
-        };
-
-        tdAdam.appendChild(makeCell(currentPlayer === "Adam", aResult, "Adam"));
-        tdJon.appendChild(makeCell(currentPlayer === "Jonathan", jResult, "Jonathan"));
-
-        if (winner === "Adam") tdAdam.classList.add("winner");
-        else if (winner === "Jonathan") tdJon.classList.add("winner");
-        else if (winner === "Tie") {
-          tdAdam.classList.add("tie");
-          tdJon.classList.add("tie");
+          container.appendChild(pre);
+          container.appendChild(textarea);
+          container.appendChild(submitBtn);
+          container.appendChild(editBtn);
+        } else if (result) {
+          const pre = document.createElement("pre");
+          pre.textContent = result;
+          container.className = "readonly";
+          container.appendChild(pre);
         }
+        return container;
+      };
 
-        const tdAction = document.createElement("td");
-        tdAction.textContent = "";
+      tdAdam.appendChild(makeCell(currentPlayer === "Adam", aResult, "Adam"));
+      tdJon.appendChild(makeCell(currentPlayer === "Jonathan", jResult, "Jonathan"));
 
-        row.appendChild(tdName);
-        row.appendChild(tdAdam);
-        row.appendChild(tdJon);
-        row.appendChild(tdAction);
-        body.appendChild(row);
-      });
+      if (winner === "Adam") tdAdam.classList.add("winner");
+      else if (winner === "Jonathan") tdJon.classList.add("winner");
+      else if (winner === "Tie") {
+        tdAdam.classList.add("tie");
+        tdJon.classList.add("tie");
+      }
+
+      const tdAction = document.createElement("td");
+      tdAction.textContent = "";
+
+      row.appendChild(tdName);
+      row.appendChild(tdAdam);
+      row.appendChild(tdJon);
+      row.appendChild(tdAction);
+      body.appendChild(row);
 
       table.style.display = "table";
     }
