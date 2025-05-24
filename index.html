@@ -2,14 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🧠 I’m Puzzled‼️</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🧠 I’m Puzzled‼️ — C.4.8</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #fff; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { border: 1px solid #ccc; padding: 0.5rem; vertical-align: top; }
     textarea, pre { width: 100%; font-family: inherit; margin: 0; padding: 0.25rem; box-sizing: border-box; }
+    pre { line-height: 1.1; padding: 0.25rem 0; white-space: pre-wrap; }
     textarea { min-height: 60px; resize: none; }
     .winner { background: #d4edda !important; font-weight: bold; }
     .tie { background: #fff3cd !important; font-weight: bold; }
@@ -17,10 +18,11 @@
     .submit-btn, .edit-btn { margin-top: 0.25rem; padding: 0.25rem 0.5rem; font-size: 0.9rem; }
     .submit-btn { background: #007aff; color: white; border: none; }
     .edit-btn { background: #ccc; border: none; }
+    .version { font-size: 0.8rem; color: #888; position: fixed; bottom: 4px; right: 8px; }
   </style>
 </head>
 <body>
-  <h1>🧠 I’m Puzzled‼️</h1>
+  <h1>🧠 I’m Puzzled‼️ — C.4.8</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select</option>
@@ -32,11 +34,12 @@
     <thead><tr><th>Puzzle</th><th>Adam</th><th>Jonathan</th></tr></thead>
     <tbody id="puzzleBody"></tbody>
   </table>
+  <div class="version">vC.4.8</div>
 
 <script>
 const supabaseUrl = "https://iqhgsdpqqshfeiqrkrqw.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxaGdzZHBxcXNoZmVpcXJrcnF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NjExMDAsImV4cCI6MjA2MzQzNzEwMH0.W3eH88RD9s3pmuVlA-H7VIfVWLq_ymtj22JLd2f9Cec";
-const supabase = typeof window.supabase !== "undefined" ? window.supabase.createClient(supabaseUrl, supabaseKey) : null;
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 const today = new Date().toISOString().split("T")[0];
 const puzzles = ["Connections", "Wordle"];
 const playerKey = "puzzle-player";
@@ -49,29 +52,26 @@ const resultsTable = document.getElementById("resultsTable");
 
 function parseWordle(text) {
   const m = text.match(/Wordle\s+(\d+)\s+(\d|X)\/6/i);
-  return m ? { puzzle: parseInt(m[1]), guesses: m[2] === "X" ? 7 : parseInt(m[2]) } : null;
-}
-function parseConnections(text) {
-  return (text.match(/[🟨🟩🟦🟪]{4}/g) || []).length;
-}
-function firstPurpleIndex(text) {
-  const lines = text.split(/\r?\n/);
-  return lines.findIndex(l => l.trim() === "🟪🟪🟪🟪");
+  if (!m) return null;
+  return { puzzle: parseInt(m[1]), guesses: m[2] === "X" ? 7 : parseInt(m[2]) };
 }
 function determineWinner(p, a, j) {
   if (!a || !j) return { winner: "", warn: false };
   if (p === "Wordle") {
     const pa = parseWordle(a), pj = parseWordle(j);
+    console.log("Parsed Wordle - Adam:", pa, "Jonathan:", pj);
     const mismatch = pa && pj && pa.puzzle !== pj.puzzle;
     if (!pa || !pj) return { winner: "", warn: mismatch };
     if (pa.guesses < pj.guesses) return { winner: "Adam", warn: mismatch };
     if (pj.guesses < pa.guesses) return { winner: "Jonathan", warn: mismatch };
     return { winner: "Tie", warn: mismatch };
   } else if (p === "Connections") {
-    const ga = parseConnections(a), gj = parseConnections(j);
+    const count = s => (s.match(/[🟨🟩🟦🟪]{4}/g) || []).length;
+    const purpleIndex = s => s.split(/\r?\n/).findIndex(l => l.trim() === "🟪🟪🟪🟪");
+    const ga = count(a), gj = count(j);
     if (ga < gj) return { winner: "Adam" };
     if (gj < ga) return { winner: "Jonathan" };
-    const ia = firstPurpleIndex(a), ij = firstPurpleIndex(j);
+    const ia = purpleIndex(a), ij = purpleIndex(j);
     if (ia < ij) return { winner: "Adam" };
     if (ij < ia) return { winner: "Jonathan" };
     return { winner: "Tie" };
@@ -80,35 +80,19 @@ function determineWinner(p, a, j) {
 }
 
 async function load() {
-  if (!supabase) {
-    status.textContent = "Supabase failed to load.";
+  const { data, error } = await supabase.from("results").select("*").eq("date", today);
+  if (error || !data) {
+    console.error("Load error:", error);
+    status.textContent = "Error loading results: " + (error?.message || "Unknown error");
     return;
   }
-  try {
-    const { data, error } = await supabase.from("results").select("*").eq("date", today);
-    if (error) {
-      status.textContent = "Supabase error: " + error.message;
-      console.error("Supabase error:", error);
-      return;
-    }
-    if (!data || data.length === 0) {
-      status.textContent = "No puzzle data found.";
-      return;
-    }
-    status.textContent = "";
-    renderTable(data);
-  } catch (err) {
-    status.textContent = "Unexpected error: " + err.message;
-    console.error("Unexpected error:", err);
-  }
-}
-
-function renderTable(data) {
+  status.textContent = "";
   const map = {};
   data.forEach(r => {
     if (!map[r.puzzle_name]) map[r.puzzle_name] = {};
     map[r.puzzle_name][r.player] = r.raw_result;
   });
+
   puzzleBody.innerHTML = "";
   puzzles.forEach(p => {
     const a = map[p]?.Adam || "", j = map[p]?.Jonathan || "";
@@ -126,9 +110,39 @@ function renderTable(data) {
         w.textContent = "Discordant puzzle versions";
         div.appendChild(w);
       }
-      const pre = document.createElement("pre");
-      pre.textContent = val;
-      div.appendChild(pre);
+      if (name === currentPlayer) {
+        const ta = document.createElement("textarea");
+        ta.value = val;
+        ta.style.display = val ? "none" : "block";
+        const pre = document.createElement("pre");
+        pre.textContent = val;
+        pre.style.display = val ? "block" : "none";
+        const sb = document.createElement("button");
+        sb.textContent = "Submit";
+        sb.className = "submit-btn";
+        sb.style.display = val ? "none" : "inline-block";
+        sb.onclick = async () => {
+          const result = ta.value.trim();
+          if (!result) return;
+          await supabase.from("results").upsert([{ date: today, puzzle_name: p, player: name, raw_result: result }]);
+          load();
+        };
+        const eb = document.createElement("button");
+        eb.textContent = "Edit";
+        eb.className = "edit-btn";
+        eb.style.display = val ? "inline-block" : "none";
+        eb.onclick = () => {
+          ta.style.display = "block";
+          pre.style.display = "none";
+          sb.style.display = "inline-block";
+          eb.style.display = "none";
+        };
+        div.appendChild(pre); div.appendChild(ta); div.appendChild(sb); div.appendChild(eb);
+      } else {
+        const pre = document.createElement("pre");
+        pre.textContent = val;
+        div.appendChild(pre);
+      }
       if (win) div.classList.add("winner");
       return div;
     }
