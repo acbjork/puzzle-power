@@ -44,7 +44,7 @@
     </thead>
     <tbody id="puzzleBody"></tbody>
   </table>
-  <div class="version" id="versionFooter">vD.3.3.6</div>
+  <div class="version" id="versionFooter">vD.3.3.7</div>
 <script>
 
 const supabase = window.supabase.createClient(
@@ -110,7 +110,8 @@ function determineWinner(puzzle, a, j) {
     if (ca.purpleLine < cj.purpleLine) 
     if (cj.purpleLine < ca.purpleLine) 
     
-  }
+  console.log("Patched block at line 113");
+}
   if (puzzle === "Strands") {
     const sa = parseStrands(a), sj = parseStrands(j);
     if (sa.words < sj.words) 
@@ -246,7 +247,7 @@ function renderTable(data) {
 }
 </script>
 <script>
-console.log("App loaded and ready: vD.3.3.6");
+console.log("App loaded and ready: vD.3.3.7");
 
 if (currentPlayer) {
   console.log("Current player detected:", currentPlayer);
@@ -257,7 +258,7 @@ if (currentPlayer) {
 </script>
 
 <script>
-console.log("Script loaded: vD.3.3.6");
+console.log("Script loaded: vD.3.3.7");
 
 function displayFallbackError(message) {
   const statusBox = document.getElementById("status");
@@ -280,7 +281,7 @@ try {
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM fully loaded - App launching (vD.3.3.6)");
+  console.log("DOM fully loaded - App launching (vD.3.3.7)");
   try {
     const stored = localStorage.getItem("puzzle_player");
     if (stored) {
