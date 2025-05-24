@@ -25,7 +25,7 @@
 </head>
 <body>
   <h1 style="text-align:center;">🧠  I’m Puzzled ‼️</h1>
-  <p class="subtitle" style="text-align:center; font-size: 0.9em; color: #555; margin-top: -0.3em; margin-bottom: 1.2em; padding-left: 0.5em;">If you ain’t first, you’re last.</p>
+  <p class="subtitle" style="text-align:center; font-size: 0.9em; color: #555; margin-top: -0.3em; margin-bottom: 1.2em; padding-left: 1.2em;">If you ain’t first, you’re last.</p>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select</option>
@@ -216,3 +216,31 @@ if (currentPlayer) setPlayer(currentPlayer);
 </script>
 </body>
 </html>
+<script>
+function renderTable(data) {
+  const map = {};
+  data.forEach(r => {
+    if (!map[r.puzzle_name]) map[r.puzzle_name] = {};
+    map[r.puzzle_name][r.player] = r.raw_result;
+  });
+
+  puzzleBody.innerHTML = "";
+  puzzles.forEach(puzzle => {
+    const row = document.createElement("tr");
+    const a = map[puzzle]?.Adam || "";
+    const j = map[puzzle]?.Jonathan || "";
+    const winnerData = determineWinner(puzzle, a, j);
+    row.innerHTML = `
+      <td>${puzzle}</td>
+      <td class="${winnerData.winner === "Adam" ? "winner" : winnerData.winner === "Tie" ? "tie" : ""}">
+        ${renderCell(puzzle, "Adam", a, winnerData)}
+      </td>
+      <td class="${winnerData.winner === "Jonathan" ? "winner" : winnerData.winner === "Tie" ? "tie" : ""}">
+        ${renderCell(puzzle, "Jonathan", j, winnerData)}
+      </td>`;
+    puzzleBody.appendChild(row);
+  });
+
+  resultsTable.style.display = "table";
+}
+</script>
