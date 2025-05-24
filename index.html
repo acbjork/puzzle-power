@@ -4,21 +4,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Puzzle Power – Increment B.2</title>
+  <title>Puzzle Power – Increment B.3</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #f7f7f7; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { border: 1px solid #ccc; padding: 0.5rem; vertical-align: top; }
-    textarea { width: 100%; resize: none; overflow: hidden; min-height: 60px; }
+    textarea, pre { width: 100%; font-family: inherit; }
+    textarea { resize: none; overflow: hidden; min-height: 60px; }
     pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; }
     .readonly { background: #eee; color: #333; }
     .winner { background: #d4edda; font-weight: bold; }
-    button { padding: 0.5rem 1rem; background: #007aff; color: white; border: none; margin-top: 0.5rem; cursor: pointer; border-radius: 5px; }
+    .tie { background: #fff3cd; font-weight: bold; }
+    .dnf { background: #f8d7da; font-style: italic; }
+    button { padding: 0.25rem 0.5rem; margin-top: 0.3rem; font-size: 0.9rem; border-radius: 4px; cursor: pointer; }
+    .submit-btn { background: #007aff; color: white; border: none; }
+    .edit-btn { background: #ccc; color: black; border: none; margin-left: 0.5rem; }
   </style>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – Increment B.2</h1>
+  <h1>🧠 Puzzle Power – Increment B.3</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select your name</option>
@@ -118,60 +123,82 @@
       puzzles.forEach(puzzle => {
         const row = document.createElement("tr");
 
-        const aResult = currentPlayer === "Adam" ? myMap[puzzle] : theirMap[puzzle];
-        const jResult = currentPlayer === "Jonathan" ? myMap[puzzle] : theirMap[puzzle];
+        const aResult = myMap[puzzle] || "";
+        const jResult = theirMap[puzzle] || "";
         const winner = determineWinner(puzzle, aResult, jResult);
 
         const tdName = document.createElement("td");
         tdName.textContent = puzzle;
 
         const tdAdam = document.createElement("td");
-        const aField = document.createElement(currentPlayer === "Adam" ? "textarea" : "pre");
-        if (currentPlayer === "Adam") {
-          aField.value = aResult || "";
-          aField.oninput = () => autoResize(aField);
-          autoResize(aField);
-        } else {
-          aField.textContent = aResult || "";
-        }
-        tdAdam.className = currentPlayer === "Adam" ? "" : "readonly";
-        if (winner === "Adam") tdAdam.classList.add("winner");
-        tdAdam.appendChild(aField);
-
         const tdJon = document.createElement("td");
-        const jField = document.createElement(currentPlayer === "Jonathan" ? "textarea" : "pre");
-        if (currentPlayer === "Jonathan") {
-          jField.value = jResult || "";
-          jField.oninput = () => autoResize(jField);
-          autoResize(jField);
-        } else {
-          jField.textContent = jResult || "";
-        }
-        tdJon.className = currentPlayer === "Jonathan" ? "" : "readonly";
-        if (winner === "Jonathan") tdJon.classList.add("winner");
-        tdJon.appendChild(jField);
 
-        const tdSubmit = document.createElement("td");
-        const button = document.createElement("button");
-        button.textContent = "Submit";
-        button.onclick = async () => {
-          const result = currentPlayer === "Adam" ? aField.value.trim() : jField.value.trim();
-          if (!result) return;
-          await client.from("results").upsert([{
-            date: today,
-            puzzle_name: puzzle,
-            player: currentPlayer,
-            raw_result: result
-          }], { onConflict: ["date", "puzzle_name", "player"] });
-          alert("Result saved.");
-          loadData();
+        const makeCell = (isSelf, result, player) => {
+          const container = document.createElement("div");
+          if (isSelf) {
+            const saved = result !== "";
+            const pre = document.createElement("pre");
+            pre.textContent = result;
+            pre.style.display = saved ? "block" : "none";
+
+            const textarea = document.createElement("textarea");
+            textarea.value = result;
+            autoResize(textarea);
+            textarea.style.display = saved ? "none" : "block";
+
+            const submitBtn = document.createElement("button");
+            submitBtn.className = "submit-btn";
+            submitBtn.textContent = "Submit";
+            submitBtn.onclick = async () => {
+              const value = textarea.value.trim();
+              if (!value) return;
+              await client.from("results").upsert([{
+                date: today,
+                puzzle_name: puzzle,
+                player: player,
+                raw_result: value
+              }], { onConflict: ["date", "puzzle_name", "player"] });
+              loadData();
+            };
+
+            const editBtn = document.createElement("button");
+            editBtn.className = "edit-btn";
+            editBtn.textContent = "Edit";
+            editBtn.onclick = () => {
+              textarea.style.display = "block";
+              pre.style.display = "none";
+            };
+
+            container.appendChild(pre);
+            container.appendChild(textarea);
+            container.appendChild(submitBtn);
+            if (saved) container.appendChild(editBtn);
+          } else {
+            const pre = document.createElement("pre");
+            pre.textContent = result;
+            container.appendChild(pre);
+            container.className = "readonly";
+          }
+          return container;
         };
-        tdSubmit.appendChild(button);
+
+        tdAdam.appendChild(makeCell(currentPlayer === "Adam", aResult, "Adam"));
+        tdJon.appendChild(makeCell(currentPlayer === "Jonathan", jResult, "Jonathan"));
+
+        if (winner === "Adam") tdAdam.classList.add("winner");
+        else if (winner === "Jonathan") tdJon.classList.add("winner");
+        else if (winner === "Tie") {
+          tdAdam.classList.add("tie");
+          tdJon.classList.add("tie");
+        }
+
+        const tdAction = document.createElement("td");
+        tdAction.textContent = "";
 
         row.appendChild(tdName);
         row.appendChild(tdAdam);
         row.appendChild(tdJon);
-        row.appendChild(tdSubmit);
+        row.appendChild(tdAction);
         body.appendChild(row);
       });
 
