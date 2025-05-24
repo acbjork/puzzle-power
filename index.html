@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Puzzle Power – B.8.1 (Connections Always Visible)</title>
+  <title>Puzzle Power – B.8.2 (Final Touches)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; background: #f7f7f7; padding: 1rem; }
@@ -26,9 +25,7 @@
     pre {
       white-space: pre-wrap;
       word-wrap: break-word;
-    }
-    .readonly pre:not(.winner pre):not(.tie pre) {
-      background: #eee;
+      background: inherit;
     }
     .readonly { color: #333; padding: 0; }
     .winner td, td.winner, .winner pre { background: #d4edda !important; font-weight: bold; }
@@ -45,7 +42,7 @@
   </style>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – B.8.1 (Connections Always Visible)</h1>
+  <h1>🧠 Puzzle Power – B.8.2 (Final Touches)</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select your name</option>
@@ -55,7 +52,7 @@
 
   <table id="resultsTable" style="display:none;">
     <thead>
-      <tr><th>Puzzle</th><th id="col1">Adam</th><th id="col2">Jonathan</th><th></th></tr>
+      <tr><th>Puzzle</th><th id="col1">Adam</th><th id="col2">Jonathan</th></tr>
     </thead>
     <tbody id="puzzleBody"></tbody>
   </table>
@@ -197,13 +194,9 @@
         tdJon.classList.add("tie");
       }
 
-      const tdAction = document.createElement("td");
-      tdAction.textContent = "";
-
       row.appendChild(tdName);
       row.appendChild(tdAdam);
       row.appendChild(tdJon);
-      row.appendChild(tdAction);
       body.appendChild(row);
 
       table.style.display = "table";
