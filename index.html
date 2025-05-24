@@ -43,7 +43,7 @@
     </thead>
     <tbody id="puzzleBody"></tbody>
   </table>
-  <div class="version" id="versionFooter">vD.3.2.5</div>
+  <div class="version" id="versionFooter">vD.3.2.6</div>
 <script>
 const supabase = window.supabase.createClient(
   "https://iqhgsdpqqshfeiqrkrqw.supabase.co",
@@ -245,12 +245,34 @@ function renderTable(data) {
 }
 </script>
 <script>
-console.log("App loaded and ready: vD.3.2.5");
+console.log("App loaded and ready: vD.3.2.6");
 
 if (currentPlayer) {
   console.log("Current player detected:", currentPlayer);
   setPlayer(currentPlayer);
 } else {
   console.log("No player selected yet.");
+}
+</script>
+
+<script>
+console.log("Script loaded: vD.3.2.6");
+
+function displayFallbackError(message) {
+  const statusBox = document.getElementById("status");
+  statusBox.textContent = message;
+  statusBox.style.color = "red";
+}
+
+try {
+  if (currentPlayer) {
+    console.log("Detected stored player:", currentPlayer);
+    setPlayer(currentPlayer);
+  } else {
+    console.log("No stored player identity.");
+  }
+} catch (e) {
+  console.error("Fatal error during app load:", e);
+  displayFallbackError("Something went wrong loading the puzzle table. Check console.");
 }
 </script>
