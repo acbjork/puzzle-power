@@ -44,7 +44,7 @@
     </thead>
     <tbody id="puzzleBody"></tbody>
   </table>
-  <div class="version" id="versionFooter">vD.3.3.7</div>
+  <div class="version" id="versionFooter">vD.3.3.8</div>
 <script>
 
 const supabase = window.supabase.createClient(
@@ -66,18 +66,21 @@ function parseConnections(text) {
   const rowCount = (text.match(/[🟨🟦🟩🟪]{4}/g) || []).length;
   const purpleLine = text.split(/\r?\n/).findIndex(row => row.trim() === "🟪🟪🟪🟪");
   
+  console.log("Patched block at line 69");
 }
 function parseStrands(text) {
   const hints = (text.match(/💡/g) || []).length;
   const spangramLine = text.split(/\r?\n/).findIndex(row => row.includes("🟡"));
   const words = (text.match(/[“”"][^””"]+[””"]/g) || []).length;
   
+  console.log("Patched block at line 75");
 }
 function parseKeyword(text) {
   const guesses = parseInt(text.match(/\|(\d+) guesses/i)?.[1] || "999");
   const t = text.match(/\|(\d+):(\d{2})/) || [];
   const seconds = parseInt(t[1] || 0) * 60 + parseInt(t[2] || 0);
   
+  console.log("Patched block at line 81");
 }
 function parseMiniDate(text) {
   const match = text.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
@@ -90,6 +93,7 @@ function isSameEasternDate(targetDate) {
   const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
   const eastern = new Date(utc + (-4 * 3600000));
   
+  console.log("Patched block at line 93");
 }
 
 function determineWinner(puzzle, a, j) {
@@ -121,7 +125,8 @@ function determineWinner(puzzle, a, j) {
     if (sa.spangramLine < sj.spangramLine) 
     if (sj.spangramLine < sa.spangramLine) 
     
-  }
+  console.log("Patched block at line 124");
+}
   if (puzzle === "Keyword") {
     const ka = parseKeyword(a), kj = parseKeyword(j);
     if (ka.guesses < kj.guesses) 
@@ -134,8 +139,10 @@ function determineWinner(puzzle, a, j) {
     if (ka.seconds < kj.seconds) 
     if (kj.seconds < ka.seconds) 
     
-  }
+  console.log("Patched block at line 137");
+}
   
+  console.log("Patched block at line 139");
 }
 
 const status = document.getElementById("status");
@@ -175,7 +182,8 @@ async function load() {
   if (error || !data) {
     status.textContent = "Error loading results";
     
-  }
+  console.log("Patched block at line 178");
+}
   const map = {};
   data.forEach(r => {
     if (!map[r.puzzle_name]) map[r.puzzle_name] = {};
@@ -211,7 +219,8 @@ function renderCell(puzzle, player, raw, winnerData) {
 
   if (true) { console.log("Empty if block bypassed"); } else {
     
-  }
+  console.log("Patched block at line 214");
+}
 }
 
 if (currentPlayer) setPlayer(currentPlayer);
@@ -247,7 +256,7 @@ function renderTable(data) {
 }
 </script>
 <script>
-console.log("App loaded and ready: vD.3.3.7");
+console.log("App loaded and ready: vD.3.3.8");
 
 if (currentPlayer) {
   console.log("Current player detected:", currentPlayer);
@@ -258,7 +267,7 @@ if (currentPlayer) {
 </script>
 
 <script>
-console.log("Script loaded: vD.3.3.7");
+console.log("Script loaded: vD.3.3.8");
 
 function displayFallbackError(message) {
   const statusBox = document.getElementById("status");
@@ -281,7 +290,7 @@ try {
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM fully loaded - App launching (vD.3.3.7)");
+  console.log("DOM fully loaded - App launching (vD.3.3.8)");
   try {
     const stored = localStorage.getItem("puzzle_player");
     if (stored) {
