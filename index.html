@@ -4,13 +4,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Puzzle Power – Increment B</title>
+  <title>Puzzle Power – Increment B.1</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #f7f7f7; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { border: 1px solid #ccc; padding: 0.5rem; vertical-align: top; }
-    textarea { width: 100%; height: 60px; }
+    textarea { width: 100%; resize: none; overflow: hidden; min-height: 60px; }
     pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; }
     .readonly { background: #eee; color: #333; }
     .winner { background: #d4edda; font-weight: bold; }
@@ -18,7 +18,7 @@
   </style>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – Increment B</h1>
+  <h1>🧠 Puzzle Power – Increment B.1</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select your name</option>
@@ -28,7 +28,7 @@
 
   <table id="resultsTable" style="display:none;">
     <thead>
-      <tr><th>Puzzle</th><th>Your Result</th><th>Other Player</th><th></th></tr>
+      <tr><th>Puzzle</th><th id="col1">Adam</th><th id="col2">Jonathan</th><th></th></tr>
     </thead>
     <tbody id="puzzleBody"></tbody>
   </table>
@@ -52,15 +52,24 @@
     const table = document.getElementById("resultsTable");
     const body = document.getElementById("puzzleBody");
 
+    function autoResize(textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = (textarea.scrollHeight + 2) + "px";
+    }
+
     function determineWinner(puzzle, aResult, jResult) {
       const parseTime = s => {
-        const parts = s.split(":");
-        return parts.length === 2 ? (parseInt(parts[0]) * 60 + parseInt(parts[1])) : Infinity;
+        const match = s.match(/(\d+):(\d+)/);
+        return match ? (parseInt(match[1]) * 60 + parseInt(match[2])) : Infinity;
+      };
+      const parseFirstNumber = s => {
+        const match = s.match(/\d+/);
+        return match ? parseInt(match[0]) : NaN;
       };
 
       if (!aResult || !jResult) return "";
 
-      if (puzzle === "Mini Crossword" || puzzle === "Apple News Crossword") {
+      if (["Mini Crossword", "Apple News Crossword"].includes(puzzle)) {
         const a = parseTime(aResult);
         const j = parseTime(jResult);
         if (a < j) return "Adam";
@@ -69,17 +78,17 @@
       }
 
       if (["Connections", "Strands", "Globle", "Flagle", "Wordle", "Keyword"].includes(puzzle)) {
-        const a = parseInt(aResult);
-        const j = parseInt(jResult);
+        const a = parseFirstNumber(aResult);
+        const j = parseFirstNumber(jResult);
         if (isNaN(a) || isNaN(j)) return "";
         if (a < j) return "Adam";
         if (j < a) return "Jonathan";
         return "Tie";
       }
 
-      if (puzzle === "News Quiz" || puzzle === "Tightrope") {
-        const a = parseInt(aResult);
-        const j = parseInt(jResult);
+      if (["News Quiz", "Tightrope"].includes(puzzle)) {
+        const a = parseFirstNumber(aResult);
+        const j = parseFirstNumber(jResult);
         if (a > j) return "Adam";
         if (j > a) return "Jonathan";
         return "Tie";
@@ -90,6 +99,8 @@
 
     async function loadData() {
       otherPlayer = currentPlayer === "Adam" ? "Jonathan" : "Adam";
+      document.getElementById("col1").textContent = "Adam";
+      document.getElementById("col2").textContent = "Jonathan";
 
       const { data: otherData } = await client.from("results")
         .select("puzzle_name, raw_result")
@@ -107,32 +118,42 @@
       puzzles.forEach(puzzle => {
         const row = document.createElement("tr");
 
-        const aResult = myMap[puzzle] || "";
-        const jResult = theirMap[puzzle] || "";
+        const aResult = currentPlayer === "Adam" ? myMap[puzzle] : theirMap[puzzle];
+        const jResult = currentPlayer === "Jonathan" ? myMap[puzzle] : theirMap[puzzle];
         const winner = determineWinner(puzzle, aResult, jResult);
 
         const tdName = document.createElement("td");
         tdName.textContent = puzzle;
 
-        const tdInput = document.createElement("td");
-        const textarea = document.createElement("textarea");
-        textarea.id = `input-${puzzle}`;
-        textarea.value = aResult;
-        if (winner === currentPlayer) tdInput.classList.add("winner");
-        tdInput.appendChild(textarea);
+        const tdAdam = document.createElement("td");
+        const aField = document.createElement(currentPlayer === "Adam" ? "textarea" : "pre");
+        aField.textContent = aResult || "";
+        if (currentPlayer === "Adam") {
+          aField.value = aResult || "";
+          aField.oninput = () => autoResize(aField);
+          autoResize(aField);
+        }
+        tdAdam.className = currentPlayer === "Adam" ? "" : "readonly";
+        if (winner === "Adam") tdAdam.classList.add("winner");
+        tdAdam.appendChild(aField);
 
-        const tdOther = document.createElement("td");
-        const pre = document.createElement("pre");
-        pre.textContent = jResult;
-        tdOther.className = "readonly";
-        if (winner === otherPlayer) tdOther.classList.add("winner");
-        tdOther.appendChild(pre);
+        const tdJon = document.createElement("td");
+        const jField = document.createElement(currentPlayer === "Jonathan" ? "textarea" : "pre");
+        jField.textContent = jResult || "";
+        if (currentPlayer === "Jonathan") {
+          jField.value = jResult || "";
+          jField.oninput = () => autoResize(jField);
+          autoResize(jField);
+        }
+        tdJon.className = currentPlayer === "Jonathan" ? "" : "readonly";
+        if (winner === "Jonathan") tdJon.classList.add("winner");
+        tdJon.appendChild(jField);
 
         const tdSubmit = document.createElement("td");
         const button = document.createElement("button");
         button.textContent = "Submit";
         button.onclick = async () => {
-          const result = textarea.value.trim();
+          const result = currentPlayer === "Adam" ? aField.value.trim() : jField.value.trim();
           if (!result) return;
           await client.from("results").upsert([{
             date: today,
@@ -146,8 +167,8 @@
         tdSubmit.appendChild(button);
 
         row.appendChild(tdName);
-        row.appendChild(tdInput);
-        row.appendChild(tdOther);
+        row.appendChild(tdAdam);
+        row.appendChild(tdJon);
         row.appendChild(tdSubmit);
         body.appendChild(row);
       });
