@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Puzzle Power – B.8 (Connections Highlight Fix)</title>
+  <title>Puzzle Power – B.8.1 (Connections Always Visible)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; background: #f7f7f7; padding: 1rem; }
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – B.8 (Connections Full-Cell Highlight)</h1>
+  <h1>🧠 Puzzle Power – B.8.1 (Connections Always Visible)</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select your name</option>
@@ -130,7 +130,6 @@
 
       const makeCell = (isSelf, result, player, isWinner, isTie) => {
         const container = document.createElement("div");
-        if (!isSelf && !result) return container;
         if (isSelf) {
           const saved = result !== "";
           const pre = document.createElement("pre");
@@ -173,9 +172,9 @@
           container.appendChild(textarea);
           container.appendChild(submitBtn);
           container.appendChild(editBtn);
-        } else if (result) {
+        } else {
           const pre = document.createElement("pre");
-          pre.textContent = result;
+          pre.textContent = result || "";
           if (isWinner) pre.classList.add("winner");
           if (isTie) pre.classList.add("tie");
           container.className = "readonly";
