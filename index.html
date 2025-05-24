@@ -43,9 +43,9 @@
     </thead>
     <tbody id="puzzleBody"></tbody>
   </table>
-  <div class="version" id="versionFooter">vD.3.2.9</div>
+  <div class="version" id="versionFooter">vD.3.3.0</div>
 <script>
-let currentPlayer = null;
+window.currentPlayer = null;
 const supabase = window.supabase.createClient(
   "https://iqhgsdpqqshfeiqrkrqw.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxaGdzZHBxcXNoZmVpcXJrcnF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NjExMDAsImV4cCI6MjA2MzQzNzEwMH0.W3eH88RD9s3pmuVlA-H7VIfVWLq_ymtj22JLd2f9Cec"
@@ -242,7 +242,7 @@ function renderTable(data) {
 }
 </script>
 <script>
-console.log("App loaded and ready: vD.3.2.9");
+console.log("App loaded and ready: vD.3.3.0");
 
 if (currentPlayer) {
   console.log("Current player detected:", currentPlayer);
@@ -253,7 +253,7 @@ if (currentPlayer) {
 </script>
 
 <script>
-console.log("Script loaded: vD.3.2.9");
+console.log("Script loaded: vD.3.3.0");
 
 function displayFallbackError(message) {
   const statusBox = document.getElementById("status");
@@ -276,7 +276,7 @@ try {
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM fully loaded - App launching (vD.3.2.9)");
+  console.log("DOM fully loaded - App launching (vD.3.3.0)");
   try {
     const stored = localStorage.getItem("puzzle_player");
     if (stored) {
