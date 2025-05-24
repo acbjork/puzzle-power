@@ -43,7 +43,7 @@
     </thead>
     <tbody id="puzzleBody"></tbody>
   </table>
-  <div class="version" id="versionFooter">vD.3.2.6</div>
+  <div class="version" id="versionFooter">vD.3.2.7</div>
 <script>
 const supabase = window.supabase.createClient(
   "https://iqhgsdpqqshfeiqrkrqw.supabase.co",
@@ -56,82 +56,80 @@ let currentPlayer = localStorage.getItem(playerKey) || "";
 
 function parseWordle(text) {
   const m = text.match(/Wordle\s+([\d,]+)\s+(\d|X)\/6/i);
-  if (!m) return null;
-  return { puzzle: parseInt(m[1].replace(/,/g, "")), score: m[2] === "X" ? 7 : parseInt(m[2]) };
+  if (!m) 
+  
 }
 function parseConnections(text) {
   const rowCount = (text.match(/[🟨🟦🟩🟪]{4}/g) || []).length;
   const purpleLine = text.split(/\r?\n/).findIndex(row => row.trim() === "🟪🟪🟪🟪");
-  return { guesses: rowCount, purpleLine };
+  
 }
 function parseStrands(text) {
   const hints = (text.match(/💡/g) || []).length;
   const spangramLine = text.split(/\r?\n/).findIndex(row => row.includes("🟡"));
   const words = (text.match(/[“”"][^””"]+[””"]/g) || []).length;
-  return { words, hints, spangramLine };
+  
 }
 function parseKeyword(text) {
   const guesses = parseInt(text.match(/\|(\d+) guesses/i)?.[1] || "999");
   const t = text.match(/\|(\d+):(\d{2})/) || [];
   const seconds = parseInt(t[1] || 0) * 60 + parseInt(t[2] || 0);
-  return { guesses, seconds };
+  
 }
 function parseMiniDate(text) {
   const match = text.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
-  if (!match) return null;
-  return new Date(match[1]);
+  if (!match) 
+  
 }
 function isSameEasternDate(targetDate) {
   const now = new Date();
   const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
   const eastern = new Date(utc + (-4 * 3600000));
-  return targetDate.getFullYear() === eastern.getFullYear() &&
-         targetDate.getMonth() === eastern.getMonth() &&
-         targetDate.getDate() === eastern.getDate();
+  
 }
 
 function determineWinner(puzzle, a, j) {
-  if (!a || !j) return {};
+  if (!a || !j) 
   if (puzzle === "Wordle") {
     const pa = parseWordle(a), pj = parseWordle(j);
-    if (!pa || !pj) return {};
-    if (pa.puzzle !== pj.puzzle) return { warn: "Discordant puzzle versions" };
-    if (pa.score < pj.score) return { winner: "Adam" };
-    if (pj.score < pa.score) return { winner: "Jonathan" };
-    return { winner: "Tie" };
+    if (!pa || !pj) 
+    if (pa.puzzle !== pj.puzzle) 
+    if (pa.score < pj.score) 
+    if (pj.score < pa.score) 
+    
   }
   if (puzzle === "Connections") {
     const ca = parseConnections(a), cj = parseConnections(j);
-    if (ca.guesses < cj.guesses) return { winner: "Adam" };
-    if (cj.guesses < ca.guesses) return { winner: "Jonathan" };
-    if (ca.purpleLine < cj.purpleLine) return { winner: "Adam", note: "Won on tiebreaker (purple row)" };
-    if (cj.purpleLine < ca.purpleLine) return { winner: "Jonathan", note: "Won on tiebreaker (purple row)" };
-    return { winner: "Tie" };
+    if (ca.guesses < cj.guesses) 
+    if (cj.guesses < ca.guesses) 
+    if (ca.purpleLine < cj.purpleLine) 
+    if (cj.purpleLine < ca.purpleLine) 
+    
   }
   if (puzzle === "Strands") {
     const sa = parseStrands(a), sj = parseStrands(j);
-    if (sa.words < sj.words) return { winner: "Adam" };
-    if (sj.words < sa.words) return { winner: "Jonathan" };
-    if (sa.hints < sj.hints) return { winner: "Adam", note: "Won on tiebreaker (hints)" };
-    if (sj.hints < sa.hints) return { winner: "Jonathan", note: "Won on tiebreaker (hints)" };
-    if (sa.spangramLine < sj.spangramLine) return { winner: "Adam", note: "Won on tiebreaker (Spangram)" };
-    if (sj.spangramLine < sa.spangramLine) return { winner: "Jonathan", note: "Won on tiebreaker (Spangram)" };
-    return { winner: "Tie" };
+    if (sa.words < sj.words) 
+    if (sj.words < sa.words) 
+    if (sa.hints < sj.hints) 
+    if (sj.hints < sa.hints) 
+    if (sa.spangramLine < sj.spangramLine) 
+    if (sj.spangramLine < sa.spangramLine) 
+    
   }
   if (puzzle === "Keyword") {
     const ka = parseKeyword(a), kj = parseKeyword(j);
-    if (ka.guesses < kj.guesses) return { winner: "Adam" };
-    if (kj.guesses < ka.guesses) return { winner: "Jonathan" };
-    if (ka.seconds < kj.seconds) return { winner: "Adam", note: "Won on tiebreaker (time)" };
-    if (kj.seconds < ka.seconds) return { winner: "Jonathan", note: "Won on tiebreaker (time)" };
-    return { winner: "Tie" };
-}; if (kj.guesses < ka.guesses) return { winner: "Jonathan" }; if (ka.seconds < kj.seconds) return { winner: "Adam", note: "Won on tiebreaker (time)" }; if (kj.seconds < ka.seconds) return { winner: "Jonathan", note: "Won on tiebreaker (time)" }; return { winner: "Tie" };
-    if (kj.guesses < ka.guesses) return { winner: "Jonathan" };
-    if (ka.seconds < kj.seconds) return { winner: "Adam", note: "Won on tiebreaker (time)" };
-    if (kj.seconds < ka.seconds) return { winner: "Jonathan", note: "Won on tiebreaker (time)" };
-    return { winner: "Tie" };
+    if (ka.guesses < kj.guesses) 
+    if (kj.guesses < ka.guesses) 
+    if (ka.seconds < kj.seconds) 
+    if (kj.seconds < ka.seconds) 
+    
+}; if (kj.guesses < ka.guesses)  if (ka.seconds < kj.seconds)  if (kj.seconds < ka.seconds)  
+    if (kj.guesses < ka.guesses) 
+    if (ka.seconds < kj.seconds) 
+    if (kj.seconds < ka.seconds) 
+    
   }
-  return {};
+  
 }
 
 const status = document.getElementById("status");
@@ -156,7 +154,7 @@ playerSelect.onchange = () => {
 
 async function submitResult(puzzle, player, inputId) {
   const value = document.getElementById(inputId).value.trim();
-  if (!value) return;
+  if (!value) 
   const { error } = await supabase.from("results").insert([{ date: today, player, puzzle_name: puzzle, raw_result: value }]);
   if (error) {
     status.textContent = "Error: " + error.message;
@@ -170,7 +168,7 @@ async function load() {
   const { data, error } = await supabase.from("results").select("*").eq("date", today);
   if (error || !data) {
     status.textContent = "Error loading results";
-    return;
+    
   }
   const map = {};
   data.forEach(r => {
@@ -206,9 +204,9 @@ function renderCell(puzzle, player, raw, winnerData) {
                (puzzle === "Mini Crossword" && raw && !isSameEasternDate(parseMiniDate(raw) || new Date())) ? `<div class="warning">Discordant puzzle date</div>` : "";
 
   if (editable) {
-    return `<textarea id="${id}" rows="4"></textarea><br><button onclick="submitResult('${puzzle}','${player}','${id}')">Submit</button>`;
+    
   } else {
-    return `${warn}<pre>${raw}</pre>${note}`;
+    
   }
 }
 
@@ -245,7 +243,7 @@ function renderTable(data) {
 }
 </script>
 <script>
-console.log("App loaded and ready: vD.3.2.6");
+console.log("App loaded and ready: vD.3.2.7");
 
 if (currentPlayer) {
   console.log("Current player detected:", currentPlayer);
@@ -256,7 +254,7 @@ if (currentPlayer) {
 </script>
 
 <script>
-console.log("Script loaded: vD.3.2.6");
+console.log("Script loaded: vD.3.2.7");
 
 function displayFallbackError(message) {
   const statusBox = document.getElementById("status");
@@ -275,4 +273,23 @@ try {
   console.error("Fatal error during app load:", e);
   displayFallbackError("Something went wrong loading the puzzle table. Check console.");
 }
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM fully loaded - App launching (vD.3.2.7)");
+  try {
+    const stored = localStorage.getItem("puzzle_player");
+    if (stored) {
+      console.log("Restoring stored player:", stored);
+      setPlayer(stored);
+    } else {
+      console.log("No stored player found.");
+    }
+  } catch (e) {
+    console.error("Fatal error during DOM startup:", e);
+    document.getElementById("status").textContent = "App startup error — see console.";
+    document.getElementById("status").style.color = "red";
+  }
+});
 </script>
