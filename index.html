@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>if (typeof currentPlayer === 'undefined') window.currentPlayer = null;</script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>🧠  I’m Puzzled ‼️ — D.3</title>
@@ -43,9 +44,9 @@
     </thead>
     <tbody id="puzzleBody"></tbody>
   </table>
-  <div class="version" id="versionFooter">vD.3.3.0</div>
+  <div class="version" id="versionFooter">vD.3.3.1</div>
 <script>
-window.currentPlayer = null;
+
 const supabase = window.supabase.createClient(
   "https://iqhgsdpqqshfeiqrkrqw.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxaGdzZHBxcXNoZmVpcXJrcnF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NjExMDAsImV4cCI6MjA2MzQzNzEwMH0.W3eH88RD9s3pmuVlA-H7VIfVWLq_ymtj22JLd2f9Cec"
@@ -53,7 +54,7 @@ const supabase = window.supabase.createClient(
 const today = new Date().toISOString().split("T")[0];
 const puzzles = ["Connections", "Wordle", "Mini Crossword", "Keyword", "Strands"];
 const playerKey = "puzzle-player";
-let currentPlayer = localStorage.getItem(playerKey) || "";
+
 
 function parseWordle(text) {
   const m = text.match(/Wordle\s+([\d,]+)\s+(\d|X)\/6/i);
@@ -242,7 +243,7 @@ function renderTable(data) {
 }
 </script>
 <script>
-console.log("App loaded and ready: vD.3.3.0");
+console.log("App loaded and ready: vD.3.3.1");
 
 if (currentPlayer) {
   console.log("Current player detected:", currentPlayer);
@@ -253,7 +254,7 @@ if (currentPlayer) {
 </script>
 
 <script>
-console.log("Script loaded: vD.3.3.0");
+console.log("Script loaded: vD.3.3.1");
 
 function displayFallbackError(message) {
   const statusBox = document.getElementById("status");
@@ -276,7 +277,7 @@ try {
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM fully loaded - App launching (vD.3.3.0)");
+  console.log("DOM fully loaded - App launching (vD.3.3.1)");
   try {
     const stored = localStorage.getItem("puzzle_player");
     if (stored) {
