@@ -4,12 +4,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Puzzle Power – Increment B.5</title>
+  <title>Puzzle Power – Increment B.6</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; background: #f7f7f7; padding: 1rem; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    th, td { border: 1px solid #ccc; padding: 0.5rem; vertical-align: top; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; vertical-align: top; background: white; }
     textarea, pre {
       width: 100%;
       font-family: inherit;
@@ -43,7 +43,7 @@
   </style>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – Increment B.5</h1>
+  <h1>🧠 Puzzle Power – Increment B.6</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select your name</option>
@@ -145,7 +145,7 @@
 
         const aResult = myMap[puzzle] || "";
         const jResult = theirMap[puzzle] || "";
-        const winner = determineWinner(puzzle, myMap[puzzle], theirMap[puzzle]);
+        const winner = determineWinner(puzzle, aResult, jResult);
 
         const tdName = document.createElement("td");
         tdName.textContent = puzzle;
