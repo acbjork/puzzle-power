@@ -1,21 +1,93 @@
 
 <!DOCTYPE html>
-<html lang='en'>
-<head><meta charset='UTF-8'><title>vE.1.3 Increment 3 – 7 Puzzles</title></head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🧠 I’m Puzzled ‼️</title>
+  <style>
+    body { font-family: sans-serif; padding: 1em; }
+    h1 { text-align: center; }
+    .subtitle { text-align: center; font-style: italic; margin-top: -10px; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 8px; vertical-align: top; }
+    th { background: #eee; }
+    .winner { background-color: #c8e6c9; }  /* green */
+    .tie { background-color: #fff9c4; }     /* yellow */
+    .discord { color: goldenrod; font-size: 0.9em; }
+    .version { position: fixed; bottom: 10px; right: 15px; font-size: 0.8em; color: #888; }
+    textarea { width: 100%; height: 4em; font-family: monospace; }
+    input[type="number"] { width: 3em; }
+  </style>
+</head>
 <body>
   <h1>🧠 I’m Puzzled ‼️</h1>
-  <div class='subtitle'>If you ain’t first, you’re last</div>
-  <div>Version: vE.1.3 Increment 3</div>
-  <p>This is the real functional app shell with:</p>
-  <ul>
-    <li>Connections</li>
-    <li>Wordle</li>
-    <li>Keyword</li>
-    <li>Strands</li>
-    <li>Mini Crossword</li>
-    <li>Apple News Crossword (min:sec fields)</li>
-    <li>News Quiz</li>
-  </ul>
-  <p>All puzzle logic, tiebreakers, and display are live in this version.</p>
+  <div class="subtitle">If you ain’t first, you’re last</div>
+  <p><strong>Select your name:</strong>
+    <select id="userSelect" onchange="renderTable()">
+      <option value="">-- Choose --</option>
+      <option value="Adam">Adam</option>
+      <option value="Jonathan">Jonathan</option>
+    </select>
+  </p>
+  <div id="tableContainer"></div>
+  <div class="version">vE.1.3 Increment 3</div>
+
+  <script>
+    const puzzles = [
+      "Connections", "Wordle", "Keyword", "Strands", "Mini Crossword", "Apple News Crossword"
+    ];
+    const userData = { Adam: {}, Jonathan: {} };
+
+    function renderTable() {
+      const user = document.getElementById("userSelect").value;
+      if (!user) return document.getElementById("tableContainer").innerHTML = "";
+      const other = user === "Adam" ? "Jonathan" : "Adam";
+
+      let html = `<table><tr><th>Puzzle</th><th>${user}</th><th>${other}</th></tr>`;
+      for (const puzzle of puzzles) {
+        html += `<tr><td style="text-align:left">${puzzle}</td>`;
+        for (const who of [user, other]) {
+          let cell = "";
+          if (puzzle === "Apple News Crossword") {
+            const val = userData[who][puzzle] || "";
+            if (who === user) {
+              const [m, s] = val.split(":");
+              cell = `<input type="number" id="${puzzle}_min" value="${m || ""}"> : 
+                      <input type="number" id="${puzzle}_sec" value="${s || ""}">
+                      <button onclick="submitTime('${user}', '${puzzle}')">Submit</button>`;
+            } else {
+              cell = val || "";
+            }
+          } else {
+            const val = userData[who][puzzle] || "";
+            if (who === user) {
+              cell = `<textarea id="${puzzle}">${val}</textarea><br/>
+                      <button onclick="submit('${user}', '${puzzle}')">Submit</button>`;
+            } else {
+              cell = `<pre>${val}</pre>`;
+            }
+          }
+          html += `<td>${cell}</td>`;
+        }
+        html += `</tr>`;
+      }
+      html += "</table>";
+      document.getElementById("tableContainer").innerHTML = html;
+    }
+
+    function submit(user, puzzle) {
+      const val = document.getElementById(puzzle).value.trim();
+      userData[user][puzzle] = val;
+      renderTable();
+    }
+
+    function submitTime(user, puzzle) {
+      const min = document.getElementById(`${puzzle}_min`).value.padStart(1, "0");
+      const sec = document.getElementById(`${puzzle}_sec`).value.padStart(2, "0");
+      userData[user][puzzle] = `${min}:${sec}`;
+      renderTable();
+    }
+  </script>
 </body>
 </html>
