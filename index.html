@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🧠  I’m Puzzled ‼️ — D.2.1 (Diagnostic)</title>
+  <title>🧠  I’m Puzzled ‼️ — D.2.2 (Full Diagnostic)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #fff; }
@@ -21,7 +21,7 @@
   </style>
 </head>
 <body>
-  <h1>🧠&nbsp;&nbsp;I’m Puzzled&nbsp;‼️ — D.2.1 (Diagnostic)</h1>
+  <h1>🧠&nbsp;&nbsp;I’m Puzzled&nbsp;‼️ — D.2.2 (Full Diagnostic)</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select</option>
@@ -39,7 +39,7 @@
     </thead>
     <tbody id="puzzleBody"></tbody>
   </table>
-  <div class="version">vD.2.1</div>
+  <div class="version">vD.2.2</div>
 
 <script>
 const supabase = window.supabase.createClient(
@@ -64,13 +64,67 @@ async function submitResult(puzzle, player, inputId) {
     console.error("Supabase insert error:", error);
     status.textContent = "Insert error: " + error.message;
   } else {
+    status.textContent = "";
     load();
   }
 }
 
-// Dummy replacements for rendering and other helpers (you already have them in prior builds)
-// These are left out here due to space; in actual usage, they will match your D.2 core logic.
+function setPlayer(name) {
+  currentPlayer = name;
+  localStorage.setItem(playerKey, name);
+  document.getElementById("identityPrompt").innerHTML =
+    `You are logged in as ${name}. <a href='#' onclick='resetPlayer()'>Not you?</a>`;
+  playerSelect.style.display = "none";
+  load();
+}
 
+function resetPlayer() {
+  localStorage.removeItem(playerKey);
+  location.reload();
+}
+
+async function load() {
+  const result = await supabase.from("results").select("*").eq("date", today);
+  const data = result.data;
+  if (result.error || !data) {
+    status.textContent = "Error loading results";
+    return;
+  }
+  renderTable(data);
+}
+
+function renderTable(data) {
+  const map = {};
+  data.forEach(r => {
+    if (!map[r.puzzle_name]) map[r.puzzle_name] = {};
+    map[r.puzzle_name][r.player] = r.raw_result;
+  });
+
+  puzzleBody.innerHTML = "";
+  puzzles.forEach(p => {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td>${p}</td>` +
+      `<td>${renderCell(p, "Adam", map[p]?.Adam)}</td>` +
+      `<td>${renderCell(p, "Jonathan", map[p]?.Jonathan)}</td>`;
+    puzzleBody.appendChild(row);
+  });
+  resultsTable.style.display = "table";
+}
+
+function renderCell(puzzle, player, raw) {
+  const id = `input-${puzzle}-${player}`.replace(/\s+/g, "");
+  const editable = currentPlayer === player && !raw;
+  if (editable) {
+    return `<textarea id="${id}" rows="4" placeholder="Paste result..."></textarea><br><button onclick="submitResult('${puzzle}','${player}','${id}')">Submit</button>`;
+  } else {
+    return raw ? `<pre>${raw}</pre>` : "";
+  }
+}
+
+if (currentPlayer) setPlayer(currentPlayer);
+playerSelect.onchange = () => {
+  if (playerSelect.value) setPlayer(playerSelect.value);
+};
 </script>
 </body>
 </html>
