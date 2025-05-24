@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Puzzle Power – Increment B.7 (Connections Demo)</title>
+  <title>Puzzle Power – B.8 (Connections Highlight Fix)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; background: #f7f7f7; padding: 1rem; }
@@ -27,10 +27,12 @@
       white-space: pre-wrap;
       word-wrap: break-word;
     }
-    .readonly pre { background: #eee; }
-    .readonly { background: #eee; color: #333; padding: 0; }
-    .winner { background: #d4edda !important; font-weight: bold; }
-    .tie { background: #fff3cd !important; font-weight: bold; }
+    .readonly pre:not(.winner pre):not(.tie pre) {
+      background: #eee;
+    }
+    .readonly { color: #333; padding: 0; }
+    .winner td, td.winner, .winner pre { background: #d4edda !important; font-weight: bold; }
+    .tie td, td.tie, .tie pre { background: #fff3cd !important; font-weight: bold; }
     button {
       padding: 0.25rem 0.5rem;
       margin-top: 0.3rem;
@@ -43,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – B.7 (Connections Only)</h1>
+  <h1>🧠 Puzzle Power – B.8 (Connections Full-Cell Highlight)</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select your name</option>
@@ -62,7 +64,6 @@
     const SUPABASE_URL = "https://iqhgsdpqqshfeiqrkrqw.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlxaGdzZHBxcXNoZmVpcXJrcnF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4NjExMDAsImV4cCI6MjA2MzQzNzEwMH0.W3eH88RD9s3pmuVlA-H7VIfVWLq_ymtj22JLd2f9Cec";
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
     const puzzles = ["Connections"];
     const playerKey = "puzzle-player";
     const today = new Date().toISOString().split("T")[0];
@@ -127,7 +128,7 @@
       const tdAdam = document.createElement("td");
       const tdJon = document.createElement("td");
 
-      const makeCell = (isSelf, result, player) => {
+      const makeCell = (isSelf, result, player, isWinner, isTie) => {
         const container = document.createElement("div");
         if (!isSelf && !result) return container;
         if (isSelf) {
@@ -175,18 +176,24 @@
         } else if (result) {
           const pre = document.createElement("pre");
           pre.textContent = result;
+          if (isWinner) pre.classList.add("winner");
+          if (isTie) pre.classList.add("tie");
           container.className = "readonly";
           container.appendChild(pre);
         }
         return container;
       };
 
-      tdAdam.appendChild(makeCell(currentPlayer === "Adam", aResult, "Adam"));
-      tdJon.appendChild(makeCell(currentPlayer === "Jonathan", jResult, "Jonathan"));
+      const isAdamWinner = winner === "Adam";
+      const isJonWinner = winner === "Jonathan";
+      const isTie = winner === "Tie";
 
-      if (winner === "Adam") tdAdam.classList.add("winner");
-      else if (winner === "Jonathan") tdJon.classList.add("winner");
-      else if (winner === "Tie") {
+      tdAdam.appendChild(makeCell(currentPlayer === "Adam", aResult, "Adam", isAdamWinner, isTie));
+      tdJon.appendChild(makeCell(currentPlayer === "Jonathan", jResult, "Jonathan", isJonWinner, isTie));
+
+      if (isAdamWinner) tdAdam.classList.add("winner");
+      if (isJonWinner) tdJon.classList.add("winner");
+      if (isTie) {
         tdAdam.classList.add("tie");
         tdJon.classList.add("tie");
       }
