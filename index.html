@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🧠&nbsp;I’m Puzzled&nbsp;‼️ — C.4.11</title>
+  <title>🧠&nbsp;&nbsp;I’m Puzzled&nbsp;‼️ — C.4.12</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #fff; }
@@ -18,7 +18,7 @@
   </style>
 </head>
 <body>
-  <h1>🧠&nbsp;I’m Puzzled&nbsp;‼️ — C.4.11</h1>
+  <h1>🧠&nbsp;&nbsp;I’m Puzzled&nbsp;‼️ — C.4.12</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select</option>
@@ -36,7 +36,7 @@
     </thead>
     <tbody id="puzzleBody"></tbody>
   </table>
-  <div class="version">vC.4.11</div>
+  <div class="version">vC.4.12</div>
 
 <script>
 const supabase = window.supabase.createClient(
@@ -56,7 +56,9 @@ const resultsTable = document.getElementById("resultsTable");
 function parseWordle(text) {
   const m = text.match(/Wordle\s+(\d+)\s+(\d|X)\/6/i);
   if (!m) return null;
-  return { puzzle: parseInt(m[1]), guesses: m[2] === "X" ? 7 : parseInt(m[2]) };
+  const puzzle = parseInt(m[1].replace(/[^\d]/g, ""));
+  const guesses = m[2] === "X" ? 7 : parseInt(m[2]);
+  return { puzzle, guesses };
 }
 
 function determineWinner(p, a, j) {
@@ -106,7 +108,7 @@ function renderTable(data) {
   puzzleBody.innerHTML = "";
   puzzles.forEach(p => {
     const a = map[p]?.Adam || "", j = map[p]?.Jonathan || "";
-    const { winner, warn, debug } = determineWinner(p, a, j);
+    const { winner, warn } = determineWinner(p, a, j);
     const row = document.createElement("tr");
     const td0 = document.createElement("td");
     td0.textContent = p;
