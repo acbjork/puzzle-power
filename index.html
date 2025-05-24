@@ -44,7 +44,7 @@
     </thead>
     <tbody id="puzzleBody"></tbody>
   </table>
-  <div class="version" id="versionFooter">vD.3.3.4</div>
+  <div class="version" id="versionFooter">vD.3.3.5</div>
 <script>
 
 const supabase = window.supabase.createClient(
@@ -83,6 +83,7 @@ function parseMiniDate(text) {
   const match = text.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
   if (!match) 
   
+  console.log("Patched block before closing brace at line 86");
 }
 function isSameEasternDate(targetDate) {
   const now = new Date();
@@ -244,7 +245,7 @@ function renderTable(data) {
 }
 </script>
 <script>
-console.log("App loaded and ready: vD.3.3.4");
+console.log("App loaded and ready: vD.3.3.5");
 
 if (currentPlayer) {
   console.log("Current player detected:", currentPlayer);
@@ -255,7 +256,7 @@ if (currentPlayer) {
 </script>
 
 <script>
-console.log("Script loaded: vD.3.3.4");
+console.log("Script loaded: vD.3.3.5");
 
 function displayFallbackError(message) {
   const statusBox = document.getElementById("status");
@@ -278,7 +279,7 @@ try {
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM fully loaded - App launching (vD.3.3.4)");
+  console.log("DOM fully loaded - App launching (vD.3.3.5)");
   try {
     const stored = localStorage.getItem("puzzle_player");
     if (stored) {
