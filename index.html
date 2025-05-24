@@ -168,8 +168,8 @@
         else if (aHints < jHints) markWinner(adamCell);
         else if (jHints < aHints) markWinner(jonCell);
         else {
-          const aIndex = aVal.split("\n").findIndex(l => l.includes("🟡"));
-          const jIndex = jVal.split("\n").findIndex(l => l.includes("🟡"));
+          const aIndex = aVal.indexOf("🟡");
+          const jIndex = jVal.indexOf("🟡");
           if (aIndex !== -1 && (jIndex === -1 || aIndex < jIndex)) markWinner(adamCell);
           else if (jIndex !== -1 && (aIndex === -1 || jIndex < aIndex)) markWinner(jonCell);
           else markBothAs("tie", adamCell, jonCell);
