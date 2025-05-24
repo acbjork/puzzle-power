@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Puzzle Power – Increment B.1</title>
+  <title>Puzzle Power – Increment B.2</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body { font-family: sans-serif; padding: 1rem; background: #f7f7f7; }
@@ -18,7 +18,7 @@
   </style>
 </head>
 <body>
-  <h1>🧠 Puzzle Power – Increment B.1</h1>
+  <h1>🧠 Puzzle Power – Increment B.2</h1>
   <p id="identityPrompt">Who are you?</p>
   <select id="playerSelect">
     <option value="">Select your name</option>
@@ -127,11 +127,12 @@
 
         const tdAdam = document.createElement("td");
         const aField = document.createElement(currentPlayer === "Adam" ? "textarea" : "pre");
-        aField.textContent = aResult || "";
         if (currentPlayer === "Adam") {
           aField.value = aResult || "";
           aField.oninput = () => autoResize(aField);
           autoResize(aField);
+        } else {
+          aField.textContent = aResult || "";
         }
         tdAdam.className = currentPlayer === "Adam" ? "" : "readonly";
         if (winner === "Adam") tdAdam.classList.add("winner");
@@ -139,11 +140,12 @@
 
         const tdJon = document.createElement("td");
         const jField = document.createElement(currentPlayer === "Jonathan" ? "textarea" : "pre");
-        jField.textContent = jResult || "";
         if (currentPlayer === "Jonathan") {
           jField.value = jResult || "";
           jField.oninput = () => autoResize(jField);
           autoResize(jField);
+        } else {
+          jField.textContent = jResult || "";
         }
         tdJon.className = currentPlayer === "Jonathan" ? "" : "readonly";
         if (winner === "Jonathan") tdJon.classList.add("winner");
