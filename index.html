@@ -42,7 +42,7 @@
     <tbody id="puzzleRows"></tbody>
   </table>
 
-  <div class="version">vE.1.4 – Alternate 5 puzzles</div>
+  <div class="version">vE.1.4.1 – Alt 5 puzzles (logic fixes)</div>
 
   <script>
     const puzzles = ["Globle", "Flagle", "Apple Mini Crossword", "News Quiz", "Tightrope"];
@@ -120,6 +120,7 @@
 
     
 
+
 function highlightWinner(tr, puzzle) {
   const [adamCell, jonCell] = [tr.children[1], tr.children[2]];
   const aVal = results[puzzle].Adam;
@@ -136,16 +137,18 @@ function highlightWinner(tr, puzzle) {
   }
 
   if (puzzle === "Globle") {
-    const aScore = parseInt(aVal.match(/\b(\d{1,3})\b/)?.[1] || "999");
-    const jScore = parseInt(jVal.match(/\b(\d{1,3})\b/)?.[1] || "999");
-    if (aScore < jScore) markWinner(adamCell);
-    else if (jScore < aScore) markWinner(jonCell);
+    const aGuesses = parseInt(aVal.match(/=\s*(\d+)/)?.[1] || "999");
+    const jGuesses = parseInt(jVal.match(/=\s*(\d+)/)?.[1] || "999");
+    if (aGuesses < jGuesses) markWinner(adamCell);
+    else if (jGuesses < aGuesses) markWinner(jonCell);
     else markBothAs("tie", adamCell, jonCell);
   }
 
   if (puzzle === "Apple Mini Crossword") {
-    const aTime = parseTime(aVal.match(/(\d+:\d+)/)?.[1] || aVal.trim());
-    const jTime = parseTime(jVal.match(/(\d+:\d+)/)?.[1] || jVal.trim());
+    const aMatch = aVal.match(/(\d+)m\s*(\d+)s/);
+    const jMatch = jVal.match(/(\d+)m\s*(\d+)s/);
+    const aTime = aMatch ? parseInt(aMatch[1]) * 60 + parseInt(aMatch[2]) : 9999;
+    const jTime = jMatch ? parseInt(jMatch[1]) * 60 + parseInt(jMatch[2]) : 9999;
     if (aTime < jTime) markWinner(adamCell);
     else if (jTime < aTime) markWinner(jonCell);
     else markBothAs("tie", adamCell, jonCell);
@@ -160,11 +163,17 @@ function highlightWinner(tr, puzzle) {
   }
 
   if (puzzle === "Tightrope") {
-    const aGuesses = parseInt(aVal.match(/(\d+) guesses/)?.[1] || "999");
-    const jGuesses = parseInt(jVal.match(/(\d+) guesses/)?.[1] || "999");
-    if (aGuesses < jGuesses) markWinner(adamCell);
-    else if (jGuesses < aGuesses) markWinner(jonCell);
-    else markBothAs("tie", adamCell, jonCell);
+    const aChecks = (aVal.match(/✅/g) || []).length;
+    const jChecks = (jVal.match(/✅/g) || []).length;
+    if (aChecks > jChecks) markWinner(adamCell);
+    else if (jChecks > aChecks) markWinner(jonCell);
+    else {
+      const aScore = parseInt(aVal.match(/My Score:\s*(\d+)/)?.[1] || "0");
+      const jScore = parseInt(jVal.match(/My Score:\s*(\d+)/)?.[1] || "0");
+      if (aScore > jScore) markWinner(adamCell);
+      else if (jScore > aScore) markWinner(jonCell);
+      else markBothAs("tie", adamCell, jonCell);
+    }
   }
 }
 function parseTime(t) {
