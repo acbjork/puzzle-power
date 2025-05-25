@@ -79,7 +79,7 @@
     <tbody id="puzzleRows"></tbody>
   </table>
 
-  <div class="version">vF.0.3 – Tiebreak notes + visible green</div>
+  <div class="version">vF.0.3.1 – Winner logic restored</div>
 
   <script>
     const puzzles = ["Connections", "Strands", "On The Record", "Keyword", "NYT Mini", "Apple Mini", "Globle", "Flagle", "Wordle", "Tightrope"];
@@ -299,8 +299,10 @@ function parseTime(t) {
     }
 
     
+
 function markWinner(cell, reason = "") {
   const div = cell.querySelector(".result-block");
+  cell.classList.add("winner");
   if (div) div.classList.add("winner");
   if (reason) {
     const note = document.createElement("div");
@@ -310,11 +312,15 @@ function markWinner(cell, reason = "") {
   }
 }
 
+}
+
 
     
+
 function markBothAs(cls, a, b) {
   [a, b].forEach(cell => {
     const div = cell.querySelector(".result-block");
+    cell.classList.add(cls);
     if (div) div.classList.add(cls);
     const val = cell.textContent;
     if (/Wordle \d+/.test(val)) {
@@ -324,6 +330,9 @@ function markBothAs(cls, a, b) {
       warn.textContent = "Discordant puzzle version";
       cell.appendChild(warn);
     }
+  });
+}
+
   });
 }
 
