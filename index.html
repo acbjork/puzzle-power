@@ -42,10 +42,10 @@
     <tbody id="puzzleRows"></tbody>
   </table>
 
-  <div class="version">vE.2.0 – All 10 puzzles</div>
+  <div class="version">vE.2.0.2 – Renamed + Reordered</div>
 
   <script>
-    const puzzles = ["Connections", "Wordle", "Keyword", "Strands", "Mini Crossword", "Globle", "Flagle", "Apple Mini Crossword", "News Quiz", "Tightrope"];
+    const puzzles = ["Connections", "Strands", "On The Record", "Keyword", "NYT Mini", "Apple Mini", "Globle", "Flagle", "Wordle", "Tightrope"];
     const results = {}; // { puzzle: { Adam: "...", Jonathan: "..." } }
     let currentUser = null;
 
@@ -178,7 +178,7 @@ function highlightWinner(tr, puzzle) {
     }
   }
 
-  if (puzzle === "Mini Crossword") {
+  if (puzzle === "NYT Mini") {
     const aTime = parseTime(aVal.match(/(\d+:\d+)/)?.[1] || aVal.trim());
     const jTime = parseTime(jVal.match(/(\d+:\d+)/)?.[1] || jVal.trim());
     if (aTime < jTime) markWinner(adamCell);
@@ -202,7 +202,7 @@ function highlightWinner(tr, puzzle) {
     else markBothAs("tie", adamCell, jonCell);
   }
 
-  if (puzzle === "Apple Mini Crossword") {
+  if (puzzle === "Apple Mini") {
     const aMatch = aVal.match(/(\d+)m\s*(\d+)s/);
     const jMatch = jVal.match(/(\d+)m\s*(\d+)s/);
     const aTime = aMatch ? parseInt(aMatch[1]) * 60 + parseInt(aMatch[2]) : 9999;
@@ -212,7 +212,7 @@ function highlightWinner(tr, puzzle) {
     else markBothAs("tie", adamCell, jonCell);
   }
 
-  if (puzzle === "News Quiz") {
+  if (puzzle === "On The Record") {
     const aScore = parseInt(aVal.match(/\b(\d{1,3})\b/)?.[1] || "0");
     const jScore = parseInt(jVal.match(/\b(\d{1,3})\b/)?.[1] || "0");
     if (aScore > jScore) markWinner(adamCell);
