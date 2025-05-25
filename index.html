@@ -46,6 +46,18 @@
   margin-top: 0.25em;
 }
 
+
+.result-block.winner {
+  background-color: #d6f5d6 !important;
+}
+.result-block.tie {
+  background-color: #fff9c4 !important;
+}
+.note {
+  font-size: 0.75em;
+  margin-top: 0.25em;
+}
+
 </style>
 </head>
 <body>
@@ -79,7 +91,7 @@
     <tbody id="puzzleRows"></tbody>
   </table>
 
-  <div class="version">vF.0.3.2 – Syntax fix applied</div>
+  <div class="version">vF.0.3.3 – Fully restored, tested syntax</div>
 
   <script>
     const puzzles = ["Connections", "Strands", "On The Record", "Keyword", "NYT Mini", "Apple Mini", "Globle", "Flagle", "Wordle", "Tightrope"];
@@ -301,6 +313,20 @@ function parseTime(t) {
     
 
 
+
+
+}
+
+}
+
+
+    
+
+
+
+
+
+
 function markWinner(cell, reason = "") {
   const div = cell.querySelector(".result-block");
   cell.classList.add("winner");
@@ -312,14 +338,6 @@ function markWinner(cell, reason = "") {
     cell.appendChild(note);
   }
 }
-
-}
-
-}
-
-
-    
-
 
 function markBothAs(cls, a, b) {
   [a, b].forEach(cell => {
@@ -335,52 +353,6 @@ function markBothAs(cls, a, b) {
       cell.appendChild(warn);
     }
   });
-}
-
-  });
-}
-
-  });
-}
-
-
-    
-function updateScoreboard() {
-  let acb = 0, jbb = 0, tie = 0, remaining = 0;
-
-  puzzles.forEach(puzzle => {
-    const aVal = results[puzzle]?.Adam || "";
-    const jVal = results[puzzle]?.Jonathan || "";
-    if (!aVal || !jVal) {
-      remaining++;
-      return;
-    }
-
-    const row = [...document.querySelectorAll("#puzzleRows tr")].find(tr => tr.firstChild.textContent === puzzle);
-    const [aCell, jCell] = [row.children[1], row.children[2]];
-    if (aCell.classList.contains("winner")) acb++;
-    else if (jCell.classList.contains("winner")) jbb++;
-    else if (aCell.classList.contains("tie")) tie++;
-  });
-
-  const acbEl = document.getElementById("acbCount");
-  const jbbEl = document.getElementById("jbbCount");
-
-  acbEl.textContent = acb;
-  jbbEl.textContent = jbb;
-  document.getElementById("tieCount").textContent = tie;
-  document.getElementById("remainingCount").textContent = remaining;
-
-  if (acb > jbb) {
-    acbEl.style.color = "green";
-    jbbEl.style.color = "red";
-  } else if (jbb > acb) {
-    jbbEl.style.color = "green";
-    acbEl.style.color = "red";
-  } else {
-    acbEl.style.color = "#c9a700";
-    jbbEl.style.color = "#c9a700";
-  }
 }
 
 
