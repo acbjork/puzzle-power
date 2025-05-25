@@ -70,11 +70,23 @@
     <tbody id="puzzleRows"></tbody>
   </table>
 
-  <div class="version">vF.0.1 – Scoreboard restyle + winner shading fix</div>
+  <div class="version">vF.0.2 – Bugfix + Persistent Storage</div>
 
   <script>
     const puzzles = ["Connections", "Strands", "On The Record", "Keyword", "NYT Mini", "Apple Mini", "Globle", "Flagle", "Wordle", "Tightrope"];
-    const results = {}; // { puzzle: { Adam: "...", Jonathan: "..." } }
+    const results = {};
+
+window.addEventListener("beforeunload", () => {
+  localStorage.setItem("puzzleResults", JSON.stringify(results));
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+  const saved = localStorage.getItem("puzzleResults");
+  if (saved) {
+    Object.assign(results, JSON.parse(saved));
+  }
+});
+ // { puzzle: { Adam: "...", Jonathan: "..." } }
     let currentUser = null;
 
     function renderTable() {
@@ -300,6 +312,7 @@ function parseTime(t) {
 
     
 
+
 function updateScoreboard() {
   let acb = 0, jbb = 0, tie = 0, remaining = 0;
 
@@ -310,6 +323,34 @@ function updateScoreboard() {
       remaining++;
       return;
     }
+
+    const row = [...document.querySelectorAll("#puzzleRows tr")].find(tr => tr.firstChild.textContent === puzzle);
+    const [aCell, jCell] = [row.children[1], row.children[2]];
+    if (aCell.classList.contains("winner")) acb++;
+    else if (jCell.classList.contains("winner")) jbb++;
+    else if (aCell.classList.contains("tie")) tie++;
+  });
+
+  const acbEl = document.getElementById("acbCount");
+  const jbbEl = document.getElementById("jbbCount");
+
+  acbEl.textContent = acb;
+  jbbEl.textContent = jbb;
+  document.getElementById("tieCount").textContent = tie;
+  document.getElementById("remainingCount").textContent = remaining;
+
+  if (acb > jbb) {
+    acbEl.style.color = "green";
+    jbbEl.style.color = "red";
+  } else if (jbb > acb) {
+    jbbEl.style.color = "green";
+    acbEl.style.color = "red";
+  } else {
+    acbEl.style.color = "#c9a700";
+    jbbEl.style.color = "#c9a700";
+  }
+}
+
 
     const row = [...document.querySelectorAll("#puzzleRows tr")].find(tr => tr.firstChild.textContent === puzzle);
     const [aCell, jCell] = [row.children[1], row.children[2]];
