@@ -14,10 +14,27 @@
     th:first-child, td:first-child { text-align: left; }
     textarea { width: 100%; height: 4em; font-family: monospace; }
     .submitted { white-space: pre-wrap; background: #f3f3f3; padding: 0.5em; border-radius: 4px; }
-    .winner { background: #d6f5d6; }
+    .winner { background: #d6f5d6 !important; padding: 0.5em; border-radius: 4px; }
     .tie { background: #fff9c4; }
     .version { text-align: right; font-size: 0.85em; color: #888; margin-top: 2em; }
-  </style>
+  
+#scoreboard {
+  margin: 1em 0;
+  display: flex;
+  justify-content: space-around;
+  font-family: monospace;
+  font-size: 1.5em;
+}
+.scoreboard-label {
+  font-weight: bold;
+  text-align: center;
+}
+.scoreboard-value {
+  display: block;
+  font-size: 1.5em;
+}
+
+</style>
 </head>
 <body>
   <h1>🧠 I’m Puzzled ‼️</h1>
@@ -31,12 +48,15 @@
     </select>
   </label>
 
-<div id="scoreboard" style="margin: 1em 0; display: flex; justify-content: space-around; font-weight: bold;">
-  <div>ACB: <span id="acbCount">0</span></div>
-  <div>JBB: <span id="jbbCount">0</span></div>
-  <div>Tie: <span id="tieCount">0</span></div>
-  <div>Remaining: <span id="remainingCount">10</span></div>
+<div id="scoreboard">
+  <div class="scoreboard-label">ACB<span id="acbCount" class="scoreboard-value">0</span></div>
+  <div class="scoreboard-label">JBB<span id="jbbCount" class="scoreboard-value">0</span></div>
+  <div class="scoreboard-label">Tie<span id="tieCount" class="scoreboard-value">0</span></div>
+  <div class="scoreboard-label">Remaining<span id="remainingCount" class="scoreboard-value">10</span></div>
 </div>
+
+
+
 
 
   <table id="puzzleTable" style="display:none;">
@@ -50,7 +70,7 @@
     <tbody id="puzzleRows"></tbody>
   </table>
 
-  <div class="version">vF.0.0 – Scoreboard + Annotations</div>
+  <div class="version">vF.0.1 – Scoreboard restyle + winner shading fix</div>
 
   <script>
     const puzzles = ["Connections", "Strands", "On The Record", "Keyword", "NYT Mini", "Apple Mini", "Globle", "Flagle", "Wordle", "Tightrope"];
@@ -279,6 +299,7 @@ function parseTime(t) {
     }
 
     
+
 function updateScoreboard() {
   let acb = 0, jbb = 0, tie = 0, remaining = 0;
 
@@ -289,6 +310,33 @@ function updateScoreboard() {
       remaining++;
       return;
     }
+
+    const row = [...document.querySelectorAll("#puzzleRows tr")].find(tr => tr.firstChild.textContent === puzzle);
+    const [aCell, jCell] = [row.children[1], row.children[2]];
+    if (aCell.classList.contains("winner")) acb++;
+    else if (jCell.classList.contains("winner")) jbb++;
+    else if (aCell.classList.contains("tie")) tie++;
+  });
+
+  const acbEl = document.getElementById("acbCount");
+  const jbbEl = document.getElementById("jbbCount");
+
+  acbEl.textContent = acb;
+  jbbEl.textContent = jbb;
+  document.getElementById("tieCount").textContent = tie;
+  document.getElementById("remainingCount").textContent = remaining;
+
+  if (acb > jbb) {
+    acbEl.style.color = "green";
+    jbbEl.style.color = "red";
+  } else if (jbb > acb) {
+    jbbEl.style.color = "green";
+    acbEl.style.color = "red";
+  } else {
+    acbEl.style.color = "#c9a700";
+    jbbEl.style.color = "#c9a700";
+  }
+}
 
     const row = [...document.querySelectorAll("#puzzleRows tr")].find(tr => tr.firstChild.textContent === puzzle);
     const [aCell, jCell] = [row.children[1], row.children[2]];
