@@ -17,30 +17,7 @@
     .winner { background: #d6f5d6; }
     .tie { background: #fff9c4; }
     .version { text-align: right; font-size: 0.85em; color: #888; margin-top: 2em; }
-  
-.winner { background-color: #d6f5d6 !important; }
-.tie { background-color: #fff9c4 !important; }
-.note {
-  font-size: 0.75em;
-  margin-top: 0.25em;
-}
-#scoreboard {
-  margin: 1em 0;
-  display: flex;
-  justify-content: space-around;
-  font-family: monospace;
-  font-size: 1.5em;
-}
-.scoreboard-label {
-  font-weight: bold;
-  text-align: center;
-}
-.scoreboard-value {
-  display: block;
-  font-size: 1.5em;
-}
-
-</style>
+  </style>
 </head>
 <body>
   <h1>🧠 I’m Puzzled ‼️</h1>
@@ -54,14 +31,6 @@
     </select>
   </label>
 
-<div id="scoreboard">
-  <div class="scoreboard-label">ACB<span id="acbCount" class="scoreboard-value">0</span></div>
-  <div class="scoreboard-label">JBB<span id="jbbCount" class="scoreboard-value">0</span></div>
-  <div class="scoreboard-label">Tie<span id="tieCount" class="scoreboard-value">0</span></div>
-  <div class="scoreboard-label">Remaining<span id="remainingCount" class="scoreboard-value">10</span></div>
-</div>
-
-
   <table id="puzzleTable" style="display:none;">
     <thead>
       <tr>
@@ -73,32 +42,11 @@
     <tbody id="puzzleRows"></tbody>
   </table>
 
-  <div class="version">vF.0.4.3 – Apple Mini fixed & green visible</div>
+  <div class="version">vG.1.1 – Supabase integration starting</div>
 
   <script>
     const puzzles = ["Connections", "Strands", "On The Record", "Keyword", "NYT Mini", "Apple Mini", "Globle", "Flagle", "Wordle", "Tightrope"];
-    const results = {};
-
-window.addEventListener("beforeunload", () => {
-  localStorage.setItem("puzzleResults", JSON.stringify(results));
-});
-
-window.addEventListener("DOMContentLoaded", () => {
-  const saved = localStorage.getItem("puzzleResults");
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      for (const puzzle in parsed) {
-        if (!results[puzzle]) results[puzzle] = { Adam: "", Jonathan: "" };
-        results[puzzle].Adam = parsed[puzzle].Adam || "";
-        results[puzzle].Jonathan = parsed[puzzle].Jonathan || "";
-      }
-    } catch (e) {
-      console.error("Failed to load saved results:", e);
-    }
-  }
-});
- // { puzzle: { Adam: "...", Jonathan: "..." } }
+    const results = {}; // { puzzle: { Adam: "...", Jonathan: "..." } }
     let currentUser = null;
 
     function renderTable() {
@@ -154,7 +102,6 @@ window.addEventListener("DOMContentLoaded", () => {
       });
 
       document.getElementById("puzzleTable").style.display = "table";
-  updateScoreboard();
     }
 
     function enableEdit(td, puzzle, user, oldVal) {
@@ -301,75 +248,7 @@ function parseTime(t) {
       b.classList.add(cls);
     }
 
-    
-function markWinner(cell, reason = "") {
-  const div = cell.querySelector(".result-block");
-  cell.classList.add("winner");
-  if (div) div.classList.add("winner");
-  if (reason) {
-    const note = document.createElement("div");
-    note.className = "note";
-    note.textContent = "Win by tiebreak (" + reason + ")";
-    cell.appendChild(note);
-  }
-}
-
-function markBothAs(cls, a, b) {
-  [a, b].forEach(cell => {
-    const div = cell.querySelector(".result-block");
-    if (div) div.classList.add(cls);
-    cell.classList.add(cls);
-    const val = cell.textContent;
-    if (/Wordle \d+/.test(val)) {
-      const warn = document.createElement("div");
-      warn.className = "note";
-      warn.style.color = "#b8860b";
-      warn.textContent = "Discordant puzzle version";
-      cell.appendChild(warn);
-    }
-  });
-}
-
-function updateScoreboard() {
-  let acb = 0, jbb = 0, tie = 0, remaining = 0;
-
-  puzzles.forEach(puzzle => {
-    const aVal = results[puzzle]?.Adam || "";
-    const jVal = results[puzzle]?.Jonathan || "";
-    if (!aVal || !jVal) {
-      remaining++;
-      return;
-    }
-
-    const row = [...document.querySelectorAll("#puzzleRows tr")].find(tr => tr.firstChild.textContent === puzzle);
-    const [aCell, jCell] = [row.children[1], row.children[2]];
-    if (aCell.classList.contains("winner")) acb++;
-    else if (jCell.classList.contains("winner")) jbb++;
-    else if (aCell.classList.contains("tie")) tie++;
-  });
-
-  const acbEl = document.getElementById("acbCount");
-  const jbbEl = document.getElementById("jbbCount");
-
-  acbEl.textContent = acb;
-  jbbEl.textContent = jbb;
-  document.getElementById("tieCount").textContent = tie;
-  document.getElementById("remainingCount").textContent = remaining;
-
-  if (acb > jbb) {
-    acbEl.style.color = "green";
-    jbbEl.style.color = "red";
-  } else if (jbb > acb) {
-    jbbEl.style.color = "green";
-    acbEl.style.color = "red";
-  } else {
-    acbEl.style.color = "#c9a700";
-    jbbEl.style.color = "#c9a700";
-  }
-}
-
-
-document.getElementById("userSelect").addEventListener("change", e => {
+    document.getElementById("userSelect").addEventListener("change", e => {
       currentUser = e.target.value;
       renderTable();
     });
