@@ -119,6 +119,7 @@
     }
 
     
+
 function highlightWinner(tr, puzzle) {
   const [adamCell, jonCell] = [tr.children[1], tr.children[2]];
   const aVal = results[puzzle].Adam;
@@ -126,87 +127,62 @@ function highlightWinner(tr, puzzle) {
 
   if (!aVal || !jVal) return;
 
-  // Primary 5 puzzles
-(tr, puzzle) {
-      const [adamCell, jonCell] = [tr.children[1], tr.children[2]];
-      const aVal = results[puzzle].Adam;
-      const jVal = results[puzzle].Jonathan;
+  if (puzzle === "Connections") {
+    if (aVal === jVal) return markBothAs("tie", adamCell, jonCell);
+    const aLines = aVal.split("\n");
+    const jLines = jVal.split("\n");
+    const aIndex = aLines.findIndex(line => line.includes("🟪🟪🟪🟪"));
+    const jIndex = jLines.findIndex(line => line.includes("🟪🟪🟪🟪"));
+    if (aIndex !== -1 && (jIndex === -1 || aIndex < jIndex)) markWinner(adamCell);
+    else if (jIndex !== -1 && (aIndex === -1 || jIndex < aIndex)) markWinner(jonCell);
+    else markBothAs("tie", adamCell, jonCell);
+  }
 
-      if (!aVal || !jVal) return;
-
-      if (puzzle === "Connections") {
-        if (aVal === jVal) return markBothAs("tie", adamCell, jonCell);
-        const aLines = aVal.split("\n");
-        const jLines = jVal.split("\n");
-        const aIndex = aLines.findIndex(line => line.includes("🟪🟪🟪🟪"));
-        const jIndex = jLines.findIndex(line => line.includes("🟪🟪🟪🟪"));
-        if (aIndex !== -1 && (jIndex === -1 || aIndex < jIndex)) markWinner(adamCell);
-        else if (jIndex !== -1 && (aIndex === -1 || jIndex < aIndex)) markWinner(jonCell);
-        else markBothAs("tie", adamCell, jonCell);
-      }
-
-      if (puzzle === "Wordle") {
-        const aScore = parseInt(aVal.match(/\b(\d)\/6/)?.[1] || "7");
-        const jScore = parseInt(jVal.match(/\b(\d)\/6/)?.[1] || "7");
-        if (aScore < jScore) markWinner(adamCell);
-        else if (jScore < aScore) markWinner(jonCell);
-        else markBothAs("tie", adamCell, jonCell);
-      }
-
-      if (puzzle === "Keyword") {
-        const aGuesses = parseInt(aVal.match(/(\d+) guesses/)?.[1] || "999");
-        const jGuesses = parseInt(jVal.match(/(\d+) guesses/)?.[1] || "999");
-        if (aGuesses < jGuesses) markWinner(adamCell);
-        else if (jGuesses < aGuesses) markWinner(jonCell);
-        else {
-          const aTime = parseTime(aVal.match(/(\d+:\d+)/)?.[1] || "99:99");
-          const jTime = parseTime(jVal.match(/(\d+:\d+)/)?.[1] || "99:99");
-          if (aTime < jTime) markWinner(adamCell);
-          else if (jTime < aTime) markWinner(jonCell);
-          else markBothAs("tie", adamCell, jonCell);
-        }
-      }
-
-      if (puzzle === "Strands") {
-        const aHints = (aVal.match(/💡/g) || []).length;
-        const jHints = (jVal.match(/💡/g) || []).length;
-        const aTotal = aVal.split("\n").length;
-        const jTotal = jVal.split("\n").length;
-        if (aTotal < jTotal) markWinner(adamCell);
-        else if (jTotal < aTotal) markWinner(jonCell);
-        else if (aHints < jHints) markWinner(adamCell);
-        else if (jHints < aHints) markWinner(jonCell);
-        else {
-          const aIndex = aVal.indexOf("🟡");
-          const jIndex = jVal.indexOf("🟡");
-          if (aIndex !== -1 && (jIndex === -1 || aIndex < jIndex)) markWinner(adamCell);
-          else if (jIndex !== -1 && (aIndex === -1 || jIndex < aIndex)) markWinner(jonCell);
-          else markBothAs("tie", adamCell, jonCell);
-        }
-      }
-
-      if (puzzle === "Mini Crossword") {
-        const aTime = parseTime(aVal.match(/(\d+:\d+)/)?.[1] || aVal.trim());
-        const jTime = parseTime(jVal.match(/(\d+:\d+)/)?.[1] || jVal.trim());
-        if (aTime < jTime) markWinner(adamCell);
-        else if (jTime < aTime) markWinner(jonCell);
-        else markBothAs("tie", adamCell, jonCell);
-      }
-    }
-
-  // Alternate 5 puzzles
-(tr, puzzle) {
-  const [adamCell, jonCell] = [tr.children[1], tr.children[2]];
-  const aVal = results[puzzle].Adam;
-  const jVal = results[puzzle].Jonathan;
-
-  if (!aVal || !jVal) return;
-
-  if (puzzle === "Flagle") {
-    const aScore = aVal.includes("X") ? 7 : parseInt(aVal.match(/\b(\d)/)?.[1] || "7");
-    const jScore = jVal.includes("X") ? 7 : parseInt(jVal.match(/\b(\d)/)?.[1] || "7");
+  if (puzzle === "Wordle") {
+    const aScore = parseInt(aVal.match(/\b(\d)\/6/)?.[1] || "7");
+    const jScore = parseInt(jVal.match(/\b(\d)\/6/)?.[1] || "7");
     if (aScore < jScore) markWinner(adamCell);
     else if (jScore < aScore) markWinner(jonCell);
+    else markBothAs("tie", adamCell, jonCell);
+  }
+
+  if (puzzle === "Keyword") {
+    const aGuesses = parseInt(aVal.match(/(\d+) guesses/)?.[1] || "999");
+    const jGuesses = parseInt(jVal.match(/(\d+) guesses/)?.[1] || "999");
+    if (aGuesses < jGuesses) markWinner(adamCell);
+    else if (jGuesses < aGuesses) markWinner(jonCell);
+    else {
+      const aTime = parseTime(aVal.match(/(\d+:\d+)/)?.[1] || "99:99");
+      const jTime = parseTime(jVal.match(/(\d+:\d+)/)?.[1] || "99:99");
+      if (aTime < jTime) markWinner(adamCell);
+      else if (jTime < aTime) markWinner(jonCell);
+      else markBothAs("tie", adamCell, jonCell);
+    }
+  }
+
+  if (puzzle === "Strands") {
+    const aHints = (aVal.match(/💡/g) || []).length;
+    const jHints = (jVal.match(/💡/g) || []).length;
+    const aTotal = aVal.split("\n").length;
+    const jTotal = jVal.split("\n").length;
+    if (aTotal < jTotal) markWinner(adamCell);
+    else if (jTotal < aTotal) markWinner(jonCell);
+    else if (aHints < jHints) markWinner(adamCell);
+    else if (jHints < aHints) markWinner(jonCell);
+    else {
+      const aIndex = aVal.indexOf("🟡");
+      const jIndex = jVal.indexOf("🟡");
+      if (aIndex !== -1 && (jIndex === -1 || aIndex < jIndex)) markWinner(adamCell);
+      else if (jIndex !== -1 && (aIndex === -1 || jIndex < aIndex)) markWinner(jonCell);
+      else markBothAs("tie", adamCell, jonCell);
+    }
+  }
+
+  if (puzzle === "Mini Crossword") {
+    const aTime = parseTime(aVal.match(/(\d+:\d+)/)?.[1] || aVal.trim());
+    const jTime = parseTime(jVal.match(/(\d+:\d+)/)?.[1] || jVal.trim());
+    if (aTime < jTime) markWinner(adamCell);
+    else if (jTime < aTime) markWinner(jonCell);
     else markBothAs("tie", adamCell, jonCell);
   }
 
@@ -215,6 +191,14 @@ function highlightWinner(tr, puzzle) {
     const jGuesses = parseInt(jVal.match(/=\s*(\d+)/)?.[1] || "999");
     if (aGuesses < jGuesses) markWinner(adamCell);
     else if (jGuesses < aGuesses) markWinner(jonCell);
+    else markBothAs("tie", adamCell, jonCell);
+  }
+
+  if (puzzle === "Flagle") {
+    const aScore = aVal.includes("X") ? 7 : parseInt(aVal.match(/\b(\d)/)?.[1] || "7");
+    const jScore = jVal.includes("X") ? 7 : parseInt(jVal.match(/\b(\d)/)?.[1] || "7");
+    if (aScore < jScore) markWinner(adamCell);
+    else if (jScore < aScore) markWinner(jonCell);
     else markBothAs("tie", adamCell, jonCell);
   }
 
@@ -249,7 +233,6 @@ function highlightWinner(tr, puzzle) {
       else markBothAs("tie", adamCell, jonCell);
     }
   }
-}
 }
 function parseTime(t) {
       const [min, sec] = t.split(":").map(Number);
