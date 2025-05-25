@@ -79,7 +79,7 @@
     <tbody id="puzzleRows"></tbody>
   </table>
 
-  <div class="version">vF.0.3.1 – Winner logic restored</div>
+  <div class="version">vF.0.3.2 – Syntax fix applied</div>
 
   <script>
     const puzzles = ["Connections", "Strands", "On The Record", "Keyword", "NYT Mini", "Apple Mini", "Globle", "Flagle", "Wordle", "Tightrope"];
@@ -300,6 +300,7 @@ function parseTime(t) {
 
     
 
+
 function markWinner(cell, reason = "") {
   const div = cell.querySelector(".result-block");
   cell.classList.add("winner");
@@ -314,8 +315,11 @@ function markWinner(cell, reason = "") {
 
 }
 
+}
+
 
     
+
 
 function markBothAs(cls, a, b) {
   [a, b].forEach(cell => {
@@ -330,6 +334,9 @@ function markBothAs(cls, a, b) {
       warn.textContent = "Discordant puzzle version";
       cell.appendChild(warn);
     }
+  });
+}
+
   });
 }
 
